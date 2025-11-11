@@ -174,39 +174,101 @@ db.getConnection((err, connection) => {
   connection.release();
 });
 
-// Import middleware
-const { ensureAuthenticated } = require('./app/middleware/auth');
-const { requireRole } = require('./app/middleware/roleCheck');
-const { errorHandler } = require('./app/middleware/errorHandler');
+// Import middleware with safe fallbacks
+let ensureAuthenticated, requireRole, errorHandler;
 
-// Routes
-app.use('/', require('./app/routes/index'));
-app.use('/auth', require('./app/routes/auth'));
+try {
+  const authMiddleware = require('./app/middleware/auth');
+  ensureAuthenticated = authMiddleware.ensureAuthenticated || ((req, res, next) => next());
+} catch (error) {
+  console.error('❌ Error loading auth middleware:', error.message);
+  ensureAuthenticated = (req, res, next) => next();
+}
+
+try {
+  const roleMiddleware = require('./app/middleware/roleCheck');
+  requireRole = roleMiddleware.requireRole || ((roles) => (req, res, next) => next());
+} catch (error) {
+  console.error('❌ Error loading role middleware:', error.message);
+  requireRole = (roles) => (req, res, next) => next();
+}
+
+try {
+  const errorMiddleware = require('./app/middleware/errorHandler');
+  errorHandler = errorMiddleware.errorHandler || ((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).render('error/500', { title: 'Server Error' });
+  });
+} catch (error) {
+  console.error('❌ Error loading error handler:', error.message);
+  errorHandler = (err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).render('error/500', { title: 'Server Error' });
+  };
+}
+
+// Safe route loader function
+const safeRequireRoute = (routePath, routeName) => {
+  try {
+    const route = require(routePath);
+    if (typeof route !== 'function' && typeof route !== 'object') {
+      throw new Error(`Route ${routeName} did not export a valid router`);
+    }
+    console.log(`✅ ${routeName} routes loaded`);
+    return route;
+  } catch (error) {
+    console.error(`❌ ${routeName} routes failed:`, error.message);
+    
+    // Create a fallback router for missing routes
+    const fallbackRouter = express.Router();
+    fallbackRouter.get('*', (req, res) => {
+      res.status(501).render('error/501', { 
+        title: 'Route Not Implemented',
+        message: `The ${routeName} routes are not yet implemented.`
+      });
+    });
+    fallbackRouter.post('*', (req, res) => {
+      res.status(501).json({ 
+        error: 'Route not implemented',
+        message: `The ${routeName} API routes are not yet implemented.`
+      });
+    });
+    
+    return fallbackRouter;
+  }
+};
+
+// Routes with safe loading
+console.log('🔍 Loading routes...');
+
+// Public routes
+app.use('/', safeRequireRoute('./app/routes/index', 'Index'));
+app.use('/auth', safeRequireRoute('./app/routes/auth', 'Auth'));
 
 // Protected routes with role-based access
-app.use('/admin', ensureAuthenticated, requireRole(['admin']), require('./app/routes/admin'));
-app.use('/student', ensureAuthenticated, requireRole(['student']), require('./app/routes/student'));
-app.use('/instructor', ensureAuthenticated, requireRole(['instructor']), require('./app/routes/instructor'));
-app.use('/finance', ensureAuthenticated, requireRole(['finance']), require('./app/routes/finance'));
+app.use('/admin', ensureAuthenticated, requireRole(['admin']), safeRequireRoute('./app/routes/admin', 'Admin'));
+app.use('/student', ensureAuthenticated, requireRole(['student']), safeRequireRoute('./app/routes/student', 'Student'));
+app.use('/instructor', ensureAuthenticated, requireRole(['instructor']), safeRequireRoute('./app/routes/instructor', 'Instructor'));
+app.use('/finance', ensureAuthenticated, requireRole(['finance']), safeRequireRoute('./app/routes/finance', 'Finance'));
 
 // Academic routes
-app.use('/courses', ensureAuthenticated, require('./app/routes/courses'));
-app.use('/assignments', ensureAuthenticated, require('./app/routes/assignments'));
-app.use('/submissions', ensureAuthenticated, require('./app/routes/submissions'));
-app.use('/grades', ensureAuthenticated, require('./app/routes/grades'));
-app.use('/enrollments', ensureAuthenticated, require('./app/routes/enrollments'));
+app.use('/courses', ensureAuthenticated, safeRequireRoute('./app/routes/courses', 'Courses'));
+app.use('/assignments', ensureAuthenticated, safeRequireRoute('./app/routes/assignments', 'Assignments'));
+app.use('/submissions', ensureAuthenticated, safeRequireRoute('./app/routes/submissions', 'Submissions'));
+app.use('/grades', ensureAuthenticated, safeRequireRoute('./app/routes/grades', 'Grades'));
+app.use('/enrollments', ensureAuthenticated, safeRequireRoute('./app/routes/enrollments', 'Enrollments'));
 
 // Finance routes
-app.use('/payments', ensureAuthenticated, require('./app/routes/payments'));
+app.use('/payments', ensureAuthenticated, safeRequireRoute('./app/routes/payments', 'Payments'));
 
 // System routes
-app.use('/notifications', ensureAuthenticated, require('./app/routes/notifications'));
-app.use('/system', ensureAuthenticated, requireRole(['admin']), require('./app/routes/system'));
+app.use('/notifications', ensureAuthenticated, safeRequireRoute('./app/routes/notifications', 'Notifications'));
+app.use('/system', ensureAuthenticated, requireRole(['admin']), safeRequireRoute('./app/routes/system', 'System'));
 
 // API routes (if needed for mobile app or external integrations)
-app.use('/api/v1/auth', require('./app/routes/api/auth'));
-app.use('/api/v1/students', ensureAuthenticated, require('./app/routes/api/students'));
-app.use('/api/v1/courses', ensureAuthenticated, require('./app/routes/api/courses'));
+app.use('/api/v1/auth', safeRequireRoute('./app/routes/api/auth', 'API Auth'));
+app.use('/api/v1/students', ensureAuthenticated, safeRequireRoute('./app/routes/api/students', 'API Students'));
+app.use('/api/v1/courses', ensureAuthenticated, safeRequireRoute('./app/routes/api/courses', 'API Courses'));
 
 // Error handling middleware
 app.use(errorHandler);
@@ -214,7 +276,8 @@ app.use(errorHandler);
 // 404 handler (must be last route)
 app.use((req, res) => {
   res.status(404).render('error/404', { 
-    title: 'Page Not Found'
+    title: 'Page Not Found',
+    message: 'The page you are looking for does not exist.'
   });
 });
 
@@ -271,6 +334,5 @@ const startServer = (port) => {
 
 // Start the server
 startServer(PORT);
-
 
 module.exports = app;

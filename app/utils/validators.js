@@ -1,212 +1,139 @@
-const validator = require('validator');
-const moment = require('moment');
+const { body, validationResult } = require('express-validator');
 
-class Validators {
-  // Email validation
-  static isValidEmail(email) {
-    return validator.isEmail(email) && email.length <= 255;
-  }
+// Common validation rules
+const userValidationRules = () => {
+    return [
+        body('firstName')
+            .trim()
+            .isLength({ min: 2, max: 50 })
+            .withMessage('First name must be between 2 and 50 characters')
+            .isAlpha('en-US', { ignore: ' -' })
+            .withMessage('First name can only contain letters, spaces, and hyphens'),
+        
+        body('lastName')
+            .trim()
+            .isLength({ min: 2, max: 50 })
+            .withMessage('Last name must be between 2 and 50 characters')
+            .isAlpha('en-US', { ignore: ' -' })
+            .withMessage('Last name can only contain letters, spaces, and hyphens'),
+        
+        body('email')
+            .isEmail()
+            .normalizeEmail()
+            .withMessage('Please provide a valid email address'),
+        
+        body('password')
+            .isLength({ min: 6 })
+            .withMessage('Password must be at least 6 characters long')
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+            .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+    ];
+};
 
-  // Phone number validation (Kenyan format)
-  static isValidPhone(phone) {
-    // Remove any non-digit characters
-    const cleaned = phone.replace(/\D/g, '');
-    
-    // Kenyan phone numbers: 2547XXXXXXXX, 07XXXXXXXX, +2547XXXXXXXX
-    const regex = /^(?:254|\+254|0)?(7(?:(?:[129][0-9])|(?:0[0-8])|(4[0-1])|(5[0-9])|(6[0-9])|(7[0-9])|(8[0-9]))[0-9]{6})$/;
-    return regex.test(cleaned);
-  }
+const loginValidationRules = () => {
+    return [
+        body('email')
+            .isEmail()
+            .normalizeEmail()
+            .withMessage('Please provide a valid email address'),
+        
+        body('password')
+            .notEmpty()
+            .withMessage('Password is required')
+    ];
+};
 
-  // Format phone number to E.164 format
-  static formatPhone(phone) {
-    const cleaned = phone.replace(/\D/g, '');
-    
-    if (cleaned.startsWith('254') && cleaned.length === 12) {
-      return `+${cleaned}`;
-    } else if (cleaned.startsWith('0') && cleaned.length === 10) {
-      return `+254${cleaned.substring(1)}`;
-    } else if (cleaned.startsWith('7') && cleaned.length === 9) {
-      return `+254${cleaned}`;
-    } else if (cleaned.length === 12 && !cleaned.startsWith('254')) {
-      return `+${cleaned}`;
+const courseValidationRules = () => {
+    return [
+        body('courseCode')
+            .trim()
+            .isLength({ min: 3, max: 20 })
+            .withMessage('Course code must be between 3 and 20 characters')
+            .matches(/^[A-Z0-9-]+$/)
+            .withMessage('Course code can only contain uppercase letters, numbers, and hyphens'),
+        
+        body('courseName')
+            .trim()
+            .isLength({ min: 5, max: 100 })
+            .withMessage('Course name must be between 5 and 100 characters'),
+        
+        body('credits')
+            .isInt({ min: 1, max: 10 })
+            .withMessage('Credits must be between 1 and 10'),
+        
+        body('maxStudents')
+            .isInt({ min: 1, max: 500 })
+            .withMessage('Maximum students must be between 1 and 500')
+    ];
+};
+
+const assignmentValidationRules = () => {
+    return [
+        body('title')
+            .trim()
+            .isLength({ min: 5, max: 200 })
+            .withMessage('Title must be between 5 and 200 characters'),
+        
+        body('description')
+            .optional()
+            .trim()
+            .isLength({ max: 1000 })
+            .withMessage('Description cannot exceed 1000 characters'),
+        
+        body('maxPoints')
+            .isFloat({ min: 0, max: 1000 })
+            .withMessage('Maximum points must be between 0 and 1000'),
+        
+        body('dueDate')
+            .isISO8601()
+            .withMessage('Due date must be a valid date')
+            .custom((value) => {
+                if (new Date(value) <= new Date()) {
+                    throw new Error('Due date must be in the future');
+                }
+                return true;
+            })
+    ];
+};
+
+const paymentValidationRules = () => {
+    return [
+        body('amount')
+            .isFloat({ min: 1 })
+            .withMessage('Amount must be at least 1'),
+        
+        body('phoneNumber')
+            .matches(/^(\+?254|0)?[17]\d{8}$/)
+            .withMessage('Please provide a valid Kenyan phone number'),
+        
+        body('studentId')
+            .notEmpty()
+            .withMessage('Student ID is required')
+    ];
+};
+
+// Validation result middleware
+const validate = (req, res, next) => {
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+        return next();
     }
     
-    return `+${cleaned}`;
-  }
-
-  // Password strength validation
-  static isStrongPassword(password) {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-    return (
-      password.length >= minLength &&
-      hasUpperCase &&
-      hasLowerCase &&
-      hasNumbers &&
-      hasSpecialChar
-    );
-  }
-
-  // Name validation
-  static isValidName(name) {
-    const regex = /^[a-zA-Z\s\-']{2,50}$/;
-    return regex.test(name.trim());
-  }
-
-  // Student ID validation
-  static isValidStudentId(studentId) {
-    const regex = /^STU[A-Z0-9]{6,10}$/;
-    return regex.test(studentId);
-  }
-
-  // Course code validation
-  static isValidCourseCode(code) {
-    const regex = /^[A-Z]{3,4}\d{3,4}[A-Z0-9]{0,2}$/;
-    return regex.test(code);
-  }
-
-  // Amount validation
-  static isValidAmount(amount) {
-    return !isNaN(amount) && parseFloat(amount) > 0 && parseFloat(amount) <= 1000000;
-  }
-
-  // Date validation
-  static isValidDate(dateString) {
-    return moment(dateString, 'YYYY-MM-DD', true).isValid();
-  }
-
-  // Future date validation
-  static isFutureDate(dateString) {
-    return moment(dateString).isAfter(moment());
-  }
-
-  // Past date validation
-  static isPastDate(dateString) {
-    return moment(dateString).isBefore(moment());
-  }
-
-  // Date range validation
-  static isValidDateRange(startDate, endDate) {
-    return moment(startDate).isBefore(moment(endDate));
-  }
-
-  // File type validation
-  static isValidFileType(filename, allowedTypes) {
-    const extension = filename.split('.').pop().toLowerCase();
-    return allowedTypes.includes(extension);
-  }
-
-  // File size validation
-  static isValidFileSize(fileSize, maxSizeInMB) {
-    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-    return fileSize <= maxSizeInBytes;
-  }
-
-  // URL validation
-  static isValidUrl(url) {
-    return validator.isURL(url, {
-      protocols: ['http', 'https'],
-      require_protocol: true
+    const extractedErrors = [];
+    errors.array().map(err => extractedErrors.push({ [err.path]: err.msg }));
+    
+    return res.status(422).json({
+        success: false,
+        message: 'Validation failed',
+        errors: extractedErrors
     });
-  }
+};
 
-  // Kenyan ID number validation
-  static isValidKenyanId(idNumber) {
-    const regex = /^\d{8}$/;
-    return regex.test(idNumber);
-  }
-
-  // Grade validation
-  static isValidGrade(grade) {
-    const validGrades = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F'];
-    return validGrades.includes(grade.toUpperCase());
-  }
-
-  // Percentage validation
-  static isValidPercentage(percentage) {
-    return !isNaN(percentage) && percentage >= 0 && percentage <= 100;
-  }
-
-  // Credit hours validation
-  static isValidCredits(credits) {
-    return !isNaN(credits) && credits >= 0.5 && credits <= 10;
-  }
-
-  // Semester validation
-  static isValidSemester(semester) {
-    const validSemesters = ['spring', 'summer', 'fall', 'winter'];
-    return validSemesters.includes(semester.toLowerCase());
-  }
-
-  // Academic year validation
-  static isValidAcademicYear(year) {
-    const regex = /^\d{4}-\d{4}$/;
-    if (!regex.test(year)) return false;
-
-    const [start, end] = year.split('-').map(Number);
-    return end === start + 1;
-  }
-
-  // M-Pesa transaction code validation
-  static isValidMpesaCode(code) {
-    const regex = /^[A-Z0-9]{10}$/;
-    return regex.test(code);
-  }
-
-  // UUID validation
-  static isValidUUID(uuid) {
-    return validator.isUUID(uuid);
-  }
-
-  // JSON validation
-  static isValidJSON(str) {
-    try {
-      JSON.parse(str);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Array validation with minimum length
-  static isValidArray(arr, minLength = 0) {
-    return Array.isArray(arr) && arr.length >= minLength;
-  }
-
-  // Object validation
-  static isValidObject(obj) {
-    return obj && typeof obj === 'object' && !Array.isArray(obj);
-  }
-
-  // Empty value check
-  static isEmpty(value) {
-    if (value === null || value === undefined) return true;
-    if (typeof value === 'string') return value.trim() === '';
-    if (Array.isArray(value)) return value.length === 0;
-    if (typeof value === 'object') return Object.keys(value).length === 0;
-    return false;
-  }
-
-  // Sanitize input
-  static sanitizeInput(input) {
-    if (typeof input === 'string') {
-      return validator.escape(input.trim());
-    }
-    return input;
-  }
-
-  // Validate email domain
-  static isValidEmailDomain(email, allowedDomains = []) {
-    if (!this.isValidEmail(email)) return false;
-    if (allowedDomains.length === 0) return true;
-
-    const domain = email.split('@')[1];
-    return allowedDomains.includes(domain);
-  }
-}
-
-module.exports = Validators;
+module.exports = {
+    userValidationRules,
+    loginValidationRules,
+    courseValidationRules,
+    assignmentValidationRules,
+    paymentValidationRules,
+    validate
+};
