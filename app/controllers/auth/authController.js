@@ -1,283 +1,471 @@
 const passport = require('passport');
-const bcrypt = require('bcryptjs');
-const db = require('../../../config/database');
 const User = require('../../models/User');
+const Student = require('../../models/Student');
+const Instructor = require('../../models/Instructor');
 const { ROLES } = require('../../../config/constants');
+const { Generators, Validators, Helpers } = require('../../../utils');
+const db = require('../../../config/database');
 
-const authController = {
+class AuthController {
   // Show login form
-  showLogin: (req, res) => {
-    res.render('auth/login', {
-      title: 'Login - EduLMS',
-      layout: 'layouts/layout'
-    });
-  },
+  async showLogin(req, res) {
+    try {
+      res.render('auth/login', {
+        title: 'Login - EduLMS',
+        layout: 'layouts/auth-layout',
+        error_msg: req.flash('error_msg'),
+        error: req.flash('error')
+      });
+    } catch (error) {
+      console.error('❌ Login form error:', error);
+      req.flash('error_msg', 'Error loading login page');
+      res.redirect('/');
+    }
+  }
 
-  // Show register form
-  showRegister: (req, res) => {
-    res.render('auth/register', {
-      title: 'Register - EduLMS',
-      layout: 'layouts/layout',
-      roles: Object.values(ROLES).filter(role => role !== ROLES.ADMIN) // Don't allow admin self-registration
-    });
-  },
+  // Handle login
+  async handleLogin(req, res, next) {
+    passport.authenticate('local', async (err, user, info) => {
+      try {
+        if (err) {
+          console.error('Login error:', err);
+          req.flash('error_msg', 'An error occurred during login');
+          return res.redirect('/auth/login');
+        }
 
-  // Handle user registration
-  register: async (req, res) => {
+        if (!user) {
+          req.flash('error_msg', info.message || 'Invalid credentials');
+          return res.redirect('/auth/login');
+        }
+
+        req.logIn(user, async (err) => {
+          if (err) {
+            console.error('Login session error:', err);
+            req.flash('error_msg', 'An error occurred during login');
+            return res.redirect('/auth/login');
+          }
+
+          // Update last login
+          await db.query(
+            'UPDATE users SET last_login = NOW() WHERE id = ?',
+            [user.id]
+          );
+
+          // Log login activity
+          await db.query(
+            `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+             VALUES (?, 'login', 'users', ?, ?, ?)`,
+            [user.id, user.id, req.ip, req.get('User-Agent')]
+          );
+
+          // Redirect based on role
+          let redirectUrl = '/dashboard';
+          switch (user.role_name) {
+            case ROLES.ADMIN:
+              redirectUrl = '/admin/dashboard';
+              break;
+            case ROLES.INSTRUCTOR:
+              redirectUrl = '/instructor/dashboard';
+              break;
+            case ROLES.STUDENT:
+              redirectUrl = '/student/dashboard';
+              break;
+            case ROLES.FINANCE_OFFICER:
+              redirectUrl = '/finance/dashboard';
+              break;
+          }
+
+          req.flash('success_msg', `Welcome back, ${user.first_name}!`);
+          res.redirect(redirectUrl);
+        });
+      } catch (error) {
+        console.error('Login controller error:', error);
+        req.flash('error_msg', 'An error occurred during login');
+        res.redirect('/auth/login');
+      }
+    })(req, res, next);
+  }
+
+  // Show registration form
+  async showRegister(req, res) {
+    try {
+      const roles = await db.query(
+        'SELECT * FROM roles WHERE name != ? ORDER BY name',
+        [ROLES.ADMIN]
+      );
+
+      res.render('auth/register', {
+        title: 'Register - EduLMS',
+        layout: 'layouts/auth-layout',
+        roles,
+        error_msg: req.flash('error_msg'),
+        formData: req.flash('formData')[0] || {}
+      });
+    } catch (error) {
+      console.error('Registration form error:', error);
+      req.flash('error_msg', 'Error loading registration form');
+      res.redirect('/auth/login');
+    }
+  }
+
+  // Handle registration
+  async handleRegister(req, res) {
     try {
       const {
-        name,
+        first_name,
+        last_name,
         email,
         password,
-        password2,
-        role,
+        confirm_password,
+        role_id,
         phone,
         address,
         date_of_birth,
-        gender
+        gender,
+        student_id,
+        program,
+        semester,
+        year,
+        parent_name,
+        parent_phone,
+        emergency_contact,
+        employee_id,
+        department,
+        qualification,
+        specialization,
+        office_location,
+        office_hours
       } = req.body;
 
+      // Store form data for re-population
+      const formData = {
+        first_name,
+        last_name,
+        email,
+        phone,
+        address,
+        date_of_birth,
+        gender,
+        role_id,
+        student_id,
+        program,
+        semester,
+        year,
+        parent_name,
+        parent_phone,
+        emergency_contact,
+        employee_id,
+        department,
+        qualification,
+        specialization,
+        office_location,
+        office_hours
+      };
+
       // Validation
-      const errors = [];
-
-      if (!name || !email || !password || !password2 || !role) {
-        errors.push({ msg: 'Please fill in all required fields' });
-      }
-
-      if (password !== password2) {
-        errors.push({ msg: 'Passwords do not match' });
+      if (password !== confirm_password) {
+        req.flash('error_msg', 'Passwords do not match');
+        req.flash('formData', formData);
+        return res.redirect('/auth/register');
       }
 
       if (password.length < 6) {
-        errors.push({ msg: 'Password should be at least 6 characters' });
+        req.flash('error_msg', 'Password must be at least 6 characters long');
+        req.flash('formData', formData);
+        return res.redirect('/auth/register');
       }
 
-      if (!Object.values(ROLES).includes(role)) {
-        errors.push({ msg: 'Invalid role selected' });
-      }
-
-      if (errors.length > 0) {
-        return res.render('auth/register', {
-          title: 'Register - EduLMS',
-          layout: 'layouts/layout',
-          errors,
-          formData: { name, email, phone, address, date_of_birth, gender, role },
-          roles: Object.values(ROLES).filter(r => r !== ROLES.ADMIN)
-        });
-      }
-
-      // Check if user exists
+      // Check if user already exists
       const existingUser = await User.findByEmail(email);
       if (existingUser) {
-        errors.push({ msg: 'Email is already registered' });
-        return res.render('auth/register', {
-          title: 'Register - EduLMS',
-          layout: 'layouts/layout',
-          errors,
-          formData: { name, email, phone, address, date_of_birth, gender, role },
-          roles: Object.values(ROLES).filter(r => r !== ROLES.ADMIN)
-        });
+        req.flash('error_msg', 'Email already registered');
+        req.flash('formData', formData);
+        return res.redirect('/auth/register');
       }
 
-      // Get role ID
-      const roleId = await User.getRoleId(role);
-      if (!roleId) {
-        errors.push({ msg: 'Invalid role selected' });
-        return res.render('auth/register', {
-          title: 'Register - EduLMS',
-          layout: 'layouts/layout',
-          errors,
-          formData: { name, email, phone, address, date_of_birth, gender, role },
-          roles: Object.values(ROLES).filter(r => r !== ROLES.ADMIN)
-        });
+      // Get role name
+      const roles = await db.query('SELECT name FROM roles WHERE id = ?', [role_id]);
+      if (roles.length === 0) {
+        req.flash('error_msg', 'Invalid role selected');
+        req.flash('formData', formData);
+        return res.redirect('/auth/register');
       }
 
-      // Generate unique IDs based on role
-      let student_id = null;
-      let teacher_id = null;
-      let employee_id = null;
-
-      if (role === ROLES.STUDENT) {
-        student_id = await User.generateUniqueId(ROLES.STUDENT);
-      } else if (role === ROLES.INSTRUCTOR) {
-        teacher_id = await User.generateUniqueId(ROLES.INSTRUCTOR);
-      } else if (role === ROLES.FINANCE_OFFICER) {
-        employee_id = await User.generateUniqueId(ROLES.FINANCE_OFFICER);
-      }
-
-      // Create user data object
-      const userData = {
-        name,
-        email,
-        password,
-        role_id: roleId,
-        phone: phone || null,
-        address: address || null,
-        date_of_birth: date_of_birth || null,
-        gender: gender || null,
-        student_id,
-        teacher_id,
-        employee_id
-      };
+      const roleName = roles[0].name;
 
       // Create user
-      const userId = await User.create(userData);
+      const userId = await User.create({
+        first_name,
+        last_name,
+        email,
+        password,
+        role_id,
+        phone,
+        address,
+        date_of_birth,
+        gender,
+        created_by: 1 // System admin
+      });
 
-      // Log registration
+      // Create role-specific profile
+      if (roleName === ROLES.STUDENT) {
+        await Student.create({
+          user_id: userId,
+          student_id: student_id || Generators.generateStudentId(),
+          enrollment_date: new Date(),
+          program,
+          semester,
+          year: parseInt(year),
+          parent_name,
+          parent_phone,
+          emergency_contact
+        });
+      } else if (roleName === ROLES.INSTRUCTOR) {
+        await Instructor.create({
+          user_id: userId,
+          employee_id: employee_id || Generators.generateInstructorId(),
+          department,
+          qualification,
+          specialization,
+          hire_date: new Date(),
+          office_location,
+          office_hours
+        });
+      }
+
+      // Log registration activity
       await db.query(
         `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
-         VALUES (?, 'user_registration', 'users', ?, ?, ?)`,
+         VALUES (?, 'register', 'users', ?, ?, ?)`,
         [userId, userId, req.ip, req.get('User-Agent')]
       );
 
-      req.flash('success_msg', 'You are now registered and can log in');
+      req.flash('success_msg', 'Registration successful! Please login to continue.');
       res.redirect('/auth/login');
-
     } catch (error) {
       console.error('Registration error:', error);
       req.flash('error_msg', 'Registration failed. Please try again.');
+      req.flash('formData', req.body);
       res.redirect('/auth/register');
     }
-  },
+  }
 
-  // Handle user login
-  login: (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-      if (err) {
-        console.error('Login error:', err);
-        return next(err);
-      }
+  // Handle logout
+  async handleLogout(req, res) {
+    // Log logout activity
+    if (req.user) {
+      await db.query(
+        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+         VALUES (?, 'logout', 'users', ?, ?, ?)`,
+        [req.user.id, req.user.id, req.ip, req.get('User-Agent')]
+      ).catch(err => console.error('Logout logging error:', err));
+    }
 
-      if (!user) {
-        req.flash('error_msg', info.message || 'Login failed');
-        return res.redirect('/auth/login');
-      }
-
-      req.logIn(user, (err) => {
-        if (err) {
-          console.error('Login session error:', err);
-          return next(err);
-        }
-
-        // Redirect based on role
-        const redirectPaths = {
-          [ROLES.ADMIN]: '/admin/dashboard',
-          [ROLES.INSTRUCTOR]: '/instructor/dashboard',
-          [ROLES.STUDENT]: '/student/dashboard',
-          [ROLES.FINANCE_OFFICER]: '/finance/dashboard'
-        };
-
-        const redirectPath = redirectPaths[user.role_name] || '/dashboard';
-        
-        req.flash('success_msg', `Welcome back, ${user.name}!`);
-        res.redirect(redirectPath);
-      });
-    })(req, res, next);
-  },
-
-  // Handle user logout
-  logout: (req, res) => {
     req.logout((err) => {
       if (err) {
         console.error('Logout error:', err);
         req.flash('error_msg', 'Error during logout');
         return res.redirect('/dashboard');
       }
-
-      req.flash('success_msg', 'You are logged out');
+      req.flash('success_msg', 'You have been logged out successfully');
       res.redirect('/auth/login');
     });
-  },
+  }
 
-  // Show forgot password form
-  showForgotPassword: (req, res) => {
-    res.render('auth/forgot-password', {
-      title: 'Forgot Password - EduLMS',
-      layout: 'layouts/layout'
-    });
-  },
-
-  // Handle forgot password request
-  forgotPassword: async (req, res) => {
+  // Show user profile
+  async showProfile(req, res) {
     try {
-      const { email } = req.body;
+      const user = await User.findById(req.user.id);
+      let profile = null;
 
-      if (!email) {
-        req.flash('error_msg', 'Please enter your email address');
-        return res.redirect('/auth/forgot-password');
+      if (req.user.role_name === ROLES.STUDENT) {
+        profile = await Student.findByUserId(req.user.id);
+      } else if (req.user.role_name === ROLES.INSTRUCTOR) {
+        profile = await Instructor.findByUserId(req.user.id);
       }
 
-      const user = await User.findByEmail(email);
-      if (!user) {
-        // Don't reveal whether email exists for security
-        req.flash('success_msg', 'If an account with that email exists, a password reset link has been sent.');
-        return res.redirect('/auth/login');
-      }
-
-      // In a real application, you would:
-      // 1. Generate a reset token
-      // 2. Save it to the database with expiry
-      // 3. Send email with reset link
-
-      req.flash('success_msg', 'If an account with that email exists, a password reset link has been sent.');
-      res.redirect('/auth/login');
-
+      res.render('auth/profile', {
+        title: 'My Profile - EduLMS',
+        user,
+        profile,
+        success_msg: req.flash('success_msg'),
+        error_msg: req.flash('error_msg')
+      });
     } catch (error) {
-      console.error('Forgot password error:', error);
-      req.flash('error_msg', 'Error processing your request. Please try again.');
-      res.redirect('/auth/forgot-password');
-    }
-  },
-
-  // Show reset password form
-  showResetPassword: (req, res) => {
-    const { token } = req.params;
-    
-    // In a real application, you would verify the token here
-    
-    res.render('auth/reset-password', {
-      title: 'Reset Password - EduLMS',
-      layout: 'layouts/layout',
-      token
-    });
-  },
-
-  // Handle password reset
-  resetPassword: async (req, res) => {
-    try {
-      const { token } = req.params;
-      const { password, password2 } = req.body;
-
-      // Validation
-      if (!password || !password2) {
-        req.flash('error_msg', 'Please fill in all fields');
-        return res.redirect(`/auth/reset-password/${token}`);
-      }
-
-      if (password !== password2) {
-        req.flash('error_msg', 'Passwords do not match');
-        return res.redirect(`/auth/reset-password/${token}`);
-      }
-
-      if (password.length < 6) {
-        req.flash('error_msg', 'Password should be at least 6 characters');
-        return res.redirect(`/auth/reset-password/${token}`);
-      }
-
-      // In a real application, you would:
-      // 1. Verify the token and get user ID
-      // 2. Update the password
-      // 3. Invalidate the token
-
-      req.flash('success_msg', 'Password has been reset successfully. You can now login with your new password.');
-      res.redirect('/auth/login');
-
-    } catch (error) {
-      console.error('Reset password error:', error);
-      req.flash('error_msg', 'Error resetting password. Please try again.');
-      res.redirect(`/auth/reset-password/${token}`);
+      console.error('Profile error:', error);
+      req.flash('error_msg', 'Error loading profile');
+      res.redirect('/dashboard');
     }
   }
-};
 
-module.exports = authController;
+  // Update user profile
+  async updateProfile(req, res) {
+    try {
+      const { first_name, last_name, phone, address, date_of_birth, gender } = req.body;
+
+      await User.update(req.user.id, {
+        first_name,
+        last_name,
+        phone,
+        address,
+        date_of_birth,
+        gender
+      });
+
+      // Update role-specific profile if needed
+      if (req.user.role_name === ROLES.STUDENT) {
+        const { program, semester, year, parent_name, parent_phone, emergency_contact } = req.body;
+        await Student.update(req.user.id, {
+          program,
+          semester,
+          year: parseInt(year),
+          parent_name,
+          parent_phone,
+          emergency_contact
+        });
+      } else if (req.user.role_name === ROLES.INSTRUCTOR) {
+        const { department, qualification, specialization, office_location, office_hours } = req.body;
+        await Instructor.update(req.user.id, {
+          department,
+          qualification,
+          specialization,
+          office_location,
+          office_hours
+        });
+      }
+
+      // Log profile update
+      await db.query(
+        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+         VALUES (?, 'update_profile', 'users', ?, ?, ?)`,
+        [req.user.id, req.user.id, req.ip, req.get('User-Agent')]
+      );
+
+      req.flash('success_msg', 'Profile updated successfully');
+      res.redirect('/auth/profile');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      req.flash('error_msg', 'Error updating profile');
+      res.redirect('/auth/profile');
+    }
+  }
+
+  // Show change password form
+  async showChangePassword(req, res) {
+    res.render('auth/change-password', {
+      title: 'Change Password - EduLMS',
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    });
+  }
+
+  // Handle password change
+  async handleChangePassword(req, res) {
+    try {
+      const { current_password, new_password, confirm_password } = req.body;
+
+      if (new_password !== confirm_password) {
+        req.flash('error_msg', 'New passwords do not match');
+        return res.redirect('/auth/change-password');
+      }
+
+      await User.changePassword(req.user.id, current_password, new_password);
+
+      // Log password change
+      await db.query(
+        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+         VALUES (?, 'change_password', 'users', ?, ?, ?)`,
+        [req.user.id, req.user.id, req.ip, req.get('User-Agent')]
+      );
+
+      req.flash('success_msg', 'Password changed successfully');
+      res.redirect('/auth/change-password');
+    } catch (error) {
+      console.error('Password change error:', error);
+      req.flash('error_msg', error.message || 'Error changing password');
+      res.redirect('/auth/change-password');
+    }
+  }
+
+  // Show email verification form
+  async showVerifyEmail(req, res) {
+    res.render('auth/verify-email', {
+      title: 'Verify Email - EduLMS',
+      layout: 'layouts/auth-layout'
+    });
+  }
+
+  // Handle email verification request
+  async handleVerifyEmail(req, res) {
+    try {
+      // In a real application, you would send a verification email
+      req.flash('success_msg', 'Verification email sent. Please check your inbox.');
+      res.redirect('/auth/verify-email');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      req.flash('error_msg', 'Error sending verification email');
+      res.redirect('/auth/verify-email');
+    }
+  }
+
+  // Verify email with token
+  async verifyEmail(req, res) {
+    try {
+      const { token } = req.params;
+
+      // Verify token and update user email verification status
+      await db.query(
+        'UPDATE users SET email_verified = 1, updated_at = NOW() WHERE verification_token = ?',
+        [token]
+      );
+
+      req.flash('success_msg', 'Email verified successfully. You can now login.');
+      res.redirect('/auth/login');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      req.flash('error_msg', 'Invalid or expired verification token');
+      res.redirect('/auth/verify-email');
+    }
+  }
+
+  // Get current user info (API)
+  async getCurrentUser(req, res) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authenticated'
+        });
+      }
+
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          role_name: user.role_name,
+          phone: user.phone,
+          profile_picture: user.profile_picture
+        }
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching user data'
+      });
+    }
+  }
+}
+
+module.exports = new AuthController();

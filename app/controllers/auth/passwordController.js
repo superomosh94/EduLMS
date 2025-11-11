@@ -1,153 +1,179 @@
-const bcrypt = require('bcryptjs');
-const db = require('../../../config/database');
+const crypto = require('crypto');
 const User = require('../../models/User');
+const { Generators, Validators } = require('../../../utils');
+const db = require('../../../config/database');
+const emailService = require('../../services/emailService');
 
-const passwordController = {
-  // Show change password form
-  showChangePassword: (req, res) => {
-    res.render('auth/change-password', {
-      title: 'Change Password - EduLMS',
-      layout: getLayout(req.user.role_name)
+class PasswordController {
+  // Show forgot password form
+  async showForgotPassword(req, res) {
+    res.render('auth/forgot-password', {
+      title: 'Forgot Password - EduLMS',
+      layout: 'layouts/auth-layout',
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
     });
-  },
+  }
 
-  // Handle password change
-  changePassword: async (req, res) => {
+  // Handle forgot password request
+  async handleForgotPassword(req, res) {
     try {
-      const { current_password, new_password, confirm_password } = req.body;
-      const userId = req.user.id;
+      const { email } = req.body;
 
-      // Validation
-      const errors = [];
-
-      if (!current_password || !new_password || !confirm_password) {
-        errors.push({ msg: 'Please fill in all fields' });
+      const user = await User.findByEmail(email);
+      if (!user) {
+        // Don't reveal whether email exists for security
+        req.flash('success_msg', 'If an account with that email exists, a password reset link has been sent.');
+        return res.redirect('/auth/forgot-password');
       }
 
-      if (new_password !== confirm_password) {
-        errors.push({ msg: 'New passwords do not match' });
-      }
+      // Generate reset token
+      const resetToken = Generators.generateResetToken();
+      const resetExpires = new Date(Date.now() + 3600000); // 1 hour
 
-      if (new_password.length < 6) {
-        errors.push({ msg: 'New password should be at least 6 characters' });
-      }
-
-      if (errors.length > 0) {
-        return res.render('auth/change-password', {
-          title: 'Change Password - EduLMS',
-          layout: getLayout(req.user.role_name),
-          errors
-        });
-      }
-
-      // Verify current password
-      const user = await User.findById(userId);
-      const isCurrentPasswordValid = await User.verifyPassword(current_password, user.password);
-
-      if (!isCurrentPasswordValid) {
-        errors.push({ msg: 'Current password is incorrect' });
-        return res.render('auth/change-password', {
-          title: 'Change Password - EduLMS',
-          layout: getLayout(req.user.role_name),
-          errors
-        });
-      }
-
-      // Change password
-      await User.changePassword(userId, new_password);
-
-      // Log password change
+      // Save reset token to database
       await db.query(
-        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address) 
-         VALUES (?, 'password_change', 'users', ?, ?)`,
-        [userId, userId, req.ip]
+        'UPDATE users SET reset_token = ?, reset_expires = ?, updated_at = NOW() WHERE id = ?',
+        [resetToken, resetExpires, user.id]
       );
 
-      req.flash('success_msg', 'Password changed successfully');
-      res.redirect(getDashboardPath(req.user.role_name));
+      // Send reset email
+      const resetUrl = `${process.env.APP_URL}/auth/reset-password?token=${resetToken}`;
+      
+      await emailService.sendPasswordResetEmail(user, resetToken);
 
-    } catch (error) {
-      console.error('Change password error:', error);
-      req.flash('error_msg', 'Error changing password. Please try again.');
-      res.redirect('/auth/change-password');
-    }
-  },
-
-  // Show update profile form
-  showUpdateProfile: async (req, res) => {
-    try {
-      const user = await User.findById(req.user.id);
-
-      res.render('auth/update-profile', {
-        title: 'Update Profile - EduLMS',
-        layout: getLayout(req.user.role_name),
-        user
-      });
-    } catch (error) {
-      console.error('Show profile error:', error);
-      req.flash('error_msg', 'Error loading profile');
-      res.redirect(getDashboardPath(req.user.role_name));
-    }
-  },
-
-  // Handle profile update
-  updateProfile: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { name, phone, address, date_of_birth, gender } = req.body;
-
-      const updateData = {
-        name,
-        phone: phone || null,
-        address: address || null,
-        date_of_birth: date_of_birth || null,
-        gender: gender || null
-      };
-
-      // Handle file upload if provided
-      if (req.file) {
-        updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
-      }
-
-      await User.update(userId, updateData);
-
-      // Log profile update
+      // Log password reset request
       await db.query(
-        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address) 
-         VALUES (?, 'profile_update', 'users', ?, ?)`,
-        [userId, userId, req.ip]
+        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+         VALUES (?, 'password_reset_request', 'users', ?, ?, ?)`,
+        [user.id, user.id, req.ip, req.get('User-Agent')]
       );
 
-      req.flash('success_msg', 'Profile updated successfully');
-      res.redirect('/auth/profile');
-
+      req.flash('success_msg', 'Password reset instructions have been sent to your email.');
+      res.redirect('/auth/forgot-password');
     } catch (error) {
-      console.error('Update profile error:', error);
-      req.flash('error_msg', 'Error updating profile. Please try again.');
-      res.redirect('/auth/profile');
+      console.error('Forgot password error:', error);
+      req.flash('error_msg', 'Error processing password reset request');
+      res.redirect('/auth/forgot-password');
     }
   }
-};
 
-// Helper functions
-function getLayout(role) {
-  const layouts = {
-    'admin': 'layouts/admin-layout',
-    'instructor': 'layouts/instructor-layout', 
-    'student': 'layouts/student-layout',
-    'finance_officer': 'layouts/finance-layout'
-  };
-  return layouts[role] || 'layouts/layout';
+  // Show reset password form
+  async showResetPassword(req, res) {
+    const { token } = req.query;
+
+    if (!token) {
+      req.flash('error_msg', 'Invalid reset token');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    // Verify token validity
+    const users = await db.query(
+      'SELECT id, email FROM users WHERE reset_token = ? AND reset_expires > NOW()',
+      [token]
+    );
+
+    if (users.length === 0) {
+      req.flash('error_msg', 'Invalid or expired reset token');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    res.render('auth/reset-password', {
+      title: 'Reset Password - EduLMS',
+      layout: 'layouts/auth-layout',
+      token,
+      error_msg: req.flash('error_msg')
+    });
+  }
+
+  // Handle password reset
+  async handleResetPassword(req, res) {
+    try {
+      const { token, password, confirm_password } = req.body;
+
+      if (password !== confirm_password) {
+        req.flash('error_msg', 'Passwords do not match');
+        return res.redirect(`/auth/reset-password?token=${token}`);
+      }
+
+      // Verify token and get user
+      const users = await db.query(
+        'SELECT id, email FROM users WHERE reset_token = ? AND reset_expires > NOW()',
+        [token]
+      );
+
+      if (users.length === 0) {
+        req.flash('error_msg', 'Invalid or expired reset token');
+        return res.redirect('/auth/forgot-password');
+      }
+
+      const user = users[0];
+
+      // Update password and clear reset token
+      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      const hashedPassword = await require('bcryptjs').hash(password, saltRounds);
+
+      await db.query(
+        'UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL, updated_at = NOW() WHERE id = ?',
+        [hashedPassword, user.id]
+      );
+
+      // Send confirmation email
+      await emailService.sendEmail(
+        user.email,
+        'Password Reset Successful',
+        'password-reset-success',
+        {
+          siteName: process.env.SITE_NAME || 'EduLMS',
+          userName: user.first_name // You might want to fetch full user details
+        }
+      );
+
+      // Log password reset
+      await db.query(
+        `INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address, user_agent) 
+         VALUES (?, 'password_reset', 'users', ?, ?, ?)`,
+        [user.id, user.id, req.ip, req.get('User-Agent')]
+      );
+
+      req.flash('success_msg', 'Password reset successfully. You can now login with your new password.');
+      res.redirect('/auth/login');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      req.flash('error_msg', 'Error resetting password');
+      res.redirect(`/auth/reset-password?token=${req.body.token}`);
+    }
+  }
+
+  // Validate reset token (API)
+  async validateResetToken(req, res) {
+    try {
+      const { token } = req.params;
+
+      const users = await db.query(
+        'SELECT id FROM users WHERE reset_token = ? AND reset_expires > NOW()',
+        [token]
+      );
+
+      if (users.length === 0) {
+        return res.json({
+          valid: false,
+          message: 'Invalid or expired token'
+        });
+      }
+
+      res.json({
+        valid: true,
+        message: 'Token is valid'
+      });
+    } catch (error) {
+      console.error('Validate reset token error:', error);
+      res.status(500).json({
+        valid: false,
+        message: 'Error validating token'
+      });
+    }
+  }
 }
 
-function getDashboardPath(role) {
-  const paths = {
-    'admin': '/admin/dashboard',
-    'instructor': '/instructor/dashboard',
-    'student': '/student/dashboard',
-    'finance_officer': '/finance/dashboard'
-  };
-  return paths[role] || '/dashboard';
-}
-
-module.exports = passwordController;
+module.exports = new PasswordController();
