@@ -1,38 +1,26 @@
 const express = require('express');
 const router = express.Router();
-
-// Import route files
-const authRoutes = require('./auth');
-const adminRoutes = require('./admin');
-const studentRoutes = require('./student');
-const instructorRoutes = require('./instructor');
-const financeRoutes = require('./finance');
-const courseRoutes = require('./courses');
-const assignmentRoutes = require('./assignments');
-const submissionRoutes = require('./submissions');
-const gradeRoutes = require('./grades');
-const paymentRoutes = require('./payments');
-const enrollmentRoutes = require('./enrollments');
-const notificationRoutes = require('./notifications');
-const systemRoutes = require('./system');
+const { isAuthenticated, isNotAuthenticated } = require('../middleware/auth');
 
 // Home route
 router.get('/', (req, res) => {
   if (req.isAuthenticated()) {
     // Redirect to appropriate dashboard based on role
-    const redirectPaths = {
-      'admin': '/admin/dashboard',
-      'instructor': '/instructor/dashboard',
-      'student': '/student/dashboard',
-      'finance_officer': '/finance/dashboard'
-    };
-    
-    const redirectPath = redirectPaths[req.user.role_name] || '/dashboard';
-    return res.redirect(redirectPath);
+    switch (req.user.role_name) {
+      case 'admin':
+        return res.redirect('/admin/dashboard');
+      case 'instructor':
+        return res.redirect('/instructor/dashboard');
+      case 'student':
+        return res.redirect('/student/dashboard');
+      case 'finance_officer':
+        return res.redirect('/finance/dashboard');
+      default:
+        return res.redirect('/auth/login');
+    }
   }
-  
-  res.render('home', {
-    title: 'EduLMS - Learning Management System',
+  res.render('index', { 
+    title: 'Welcome to EduLMS',
     layout: 'layouts/layout'
   });
 });
@@ -40,7 +28,7 @@ router.get('/', (req, res) => {
 // About page
 router.get('/about', (req, res) => {
   res.render('about', {
-    title: 'About EduLMS',
+    title: 'About Us - EduLMS',
     layout: 'layouts/layout'
   });
 });
@@ -53,19 +41,57 @@ router.get('/contact', (req, res) => {
   });
 });
 
-// Use routes
-router.use('/auth', authRoutes);
-router.use('/admin', adminRoutes);
-router.use('/student', studentRoutes);
-router.use('/instructor', instructorRoutes);
-router.use('/finance', financeRoutes);
-router.use('/api/courses', courseRoutes);
-router.use('/api/assignments', assignmentRoutes);
-router.use('/api/submissions', submissionRoutes);
-router.use('/api/grades', gradeRoutes);
-router.use('/api/payments', paymentRoutes);
-router.use('/api/enrollments', enrollmentRoutes);
-router.use('/api/notifications', notificationRoutes);
-router.use('/api/system', systemRoutes);
+// Features page
+router.get('/features', (req, res) => {
+  res.render('features', {
+    title: 'Features - EduLMS',
+    layout: 'layouts/layout'
+  });
+});
+
+// Privacy policy
+router.get('/privacy', (req, res) => {
+  res.render('privacy', {
+    title: 'Privacy Policy - EduLMS',
+    layout: 'layouts/layout'
+  });
+});
+
+// Terms of service
+router.get('/terms', (req, res) => {
+  res.render('terms', {
+    title: 'Terms of Service - EduLMS',
+    layout: 'layouts/layout'
+  });
+});
+
+// System status
+router.get('/status', (req, res) => {
+  res.json({
+    status: 'operational',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// Dashboard redirect
+router.get('/dashboard', isAuthenticated, (req, res) => {
+  switch (req.user.role_name) {
+    case 'admin':
+      res.redirect('/admin/dashboard');
+      break;
+    case 'instructor':
+      res.redirect('/instructor/dashboard');
+      break;
+    case 'student':
+      res.redirect('/student/dashboard');
+      break;
+    case 'finance_officer':
+      res.redirect('/finance/dashboard');
+      break;
+    default:
+      res.redirect('/auth/login');
+  }
+});
 
 module.exports = router;
