@@ -1,15 +1,19 @@
-// Utility index file for easy imports
+// Services index file for easy imports
 
-const Generators = require('./generators');
-const Validators = require('./validators');
-const Helpers = require('./helpers');
-const Formatters = require('./formatters');
-const Constants = require('./constants');
+const mpesaService = require('./mpesaService');
+const pdfService = require('./pdfService');
+const emailService = require('./emailService');
+const smsService = require('./smsService');
+const notificationService = require('./notificationService');
+const reportService = require('./reportService');
+const fileService = require('./fileService');
 
 module.exports = {
-  Generators,
-  Validators,
-  Helpers,
-  Formatters,
-  Constants
+  mpesaService,
+  pdfService,
+  emailService,
+  smsService,
+  notificationService,
+  reportService,
+  fileService
 };
