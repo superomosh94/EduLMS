@@ -1,0 +1,211 @@
+<aside class="instructor-sidebar bg-success text-white">
+    <div class="sidebar-header text-center py-4">
+        <div class="instructor-avatar mb-3">
+            <img src="<%= user.avatar || '/images/avatars/default.png' %>" alt="Instructor Avatar" class="rounded-circle" width="80" height="80">
+        </div>
+        <h6 class="mb-1"><%= user.firstName %> <%= user.lastName %></h6>
+        <small class="text-light">Instructor</small>
+        <div class="instructor-department mt-2">
+            <small><%= user.department || 'Computer Science' %></small>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/instructor/dashboard">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Dashboard
+                </a>
+            </li>
+            
+            <li class="nav-section">Course Management</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'courses' ? 'active' : '' %>" href="/instructor/courses">
+                    <i class="fas fa-book me-2"></i>
+                    My Courses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'create-course' ? 'active' : '' %>" href="/instructor/courses/create">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Create Course
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'course-students' ? 'active' : '' %>" href="/instructor/courses/students">
+                    <i class="fas fa-user-graduate me-2"></i>
+                    Course Students
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'materials' ? 'active' : '' %>" href="/instructor/courses/materials">
+                    <i class="fas fa-folder me-2"></i>
+                    Course Materials
+                </a>
+            </li>
+            
+            <li class="nav-section">Assignments & Grading</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'assignments' ? 'active' : '' %>" href="/instructor/assignments">
+                    <i class="fas fa-tasks me-2"></i>
+                    Assignments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'create-assignment' ? 'active' : '' %>" href="/instructor/assignments/create">
+                    <i class="fas fa-plus me-2"></i>
+                    Create Assignment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'submissions' ? 'active' : '' %>" href="/instructor/assignments/submissions">
+                    <i class="fas fa-inbox me-2"></i>
+                    Submissions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'gradebook' ? 'active' : '' %>" href="/instructor/grades/gradebook">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Gradebook
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'grade-entry' ? 'active' : '' %>" href="/instructor/grades/entry">
+                    <i class="fas fa-edit me-2"></i>
+                    Grade Entry
+                </a>
+            </li>
+            
+            <li class="nav-section">Attendance</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'attendance' ? 'active' : '' %>" href="/instructor/attendance/take">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Take Attendance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'attendance-view' ? 'active' : '' %>" href="/instructor/attendance/view">
+                    <i class="fas fa-eye me-2"></i>
+                    View Attendance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'attendance-reports' ? 'active' : '' %>" href="/instructor/attendance/reports">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Attendance Reports
+                </a>
+            </li>
+            
+            <li class="nav-section">Communication</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'notifications' ? 'active' : '' %>" href="/instructor/notifications">
+                    <i class="fas fa-bell me-2"></i>
+                    Notifications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'create-notification' ? 'active' : '' %>" href="/instructor/notifications/create">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    Create Announcement
+                </a>
+            </li>
+        </ul>
+    </nav>
+    
+    <div class="sidebar-footer mt-auto p-3">
+        <div class="teaching-stats">
+            <div class="stat-item">
+                <small>Active Courses</small>
+                <div class="stat-value"><%= activeCourses || '0' %></div>
+            </div>
+            <div class="stat-item">
+                <small>Total Students</small>
+                <div class="stat-value"><%= totalStudents || '0' %></div>
+            </div>
+            <div class="stat-item">
+                <small>Pending Grading</small>
+                <div class="stat-value"><%= pendingGrading || '0' %></div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<style>
+.instructor-sidebar {
+    width: 280px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.instructor-avatar img {
+    border: 3px solid rgba(255,255,255,0.2);
+}
+
+.nav-section {
+    padding: 0.75rem 1rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+}
+
+.sidebar-nav .nav-link {
+    color: rgba(255,255,255,0.8);
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+    border-left-color: #fff;
+}
+
+.sidebar-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(255,255,255,0.2);
+    border-left-color: #fff;
+}
+
+.sidebar-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.teaching-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 0.375rem;
+}
+
+.stat-item small {
+    display: block;
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: 1rem;
+}
+</style>

@@ -1,0 +1,391 @@
+EduLMS/
+├── app.js
+├── package.json
+├── .env
+├── .gitignore
+├── README.md
+│
+├── config/
+│   ├── database.js
+│   ├── mpesa.js
+│   ├── app.js
+│   ├── passport.js
+│   └── constants.js
+│
+├── app/
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Student.js
+│   │   ├── Instructor.js
+│   │   ├── FinanceOfficer.js
+│   │   ├── Admin.js
+│   │   ├── Course.js
+│   │   ├── Enrollment.js
+│   │   ├── Assignment.js
+│   │   ├── Submission.js
+│   │   ├── Grade.js
+│   │   ├── Payment.js
+│   │   ├── FeeStructure.js
+│   │   ├── Notification.js
+│   │   ├── AuditLog.js
+│   │   └── SystemSetting.js
+│   │
+│   ├── controllers/
+│   │   ├── auth/
+│   │   │   ├── authController.js
+│   │   │   └── passwordController.js
+│   │   │
+│   │   ├── users/
+│   │   │   ├── adminController.js
+│   │   │   ├── studentController.js
+│   │   │   ├── instructorController.js
+│   │   │   └── financeController.js
+│   │   │
+│   │   ├── academic/
+│   │   │   ├── courseController.js
+│   │   │   ├── assignmentController.js
+│   │   │   ├── submissionController.js
+│   │   │   ├── gradeController.js
+│   │   │   └── enrollmentController.js
+│   │   │
+│   │   ├── finance/
+│   │   │   ├── paymentController.js
+│   │   │   ├── feeController.js
+│   │   │   ├── invoiceController.js
+│   │   │   └── reportController.js
+│   │   │
+│   │   └── system/
+│   │       ├── notificationController.js
+│   │       ├── auditController.js
+│   │       └── settingController.js
+│   │
+│   ├── routes/
+│   │   ├── index.js
+│   │   ├── auth.js
+│   │   ├── admin.js
+│   │   ├── student.js
+│   │   ├── instructor.js
+│   │   ├── finance.js
+│   │   ├── courses.js
+│   │   ├── assignments.js
+│   │   ├── submissions.js
+│   │   ├── grades.js
+│   │   ├── payments.js
+│   │   ├── enrollments.js
+│   │   ├── notifications.js
+│   │   └── system.js
+│   │
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   ├── roleCheck.js
+│   │   ├── validation.js
+│   │   ├── upload.js
+│   │   ├── errorHandler.js
+│   │   └── logger.js
+│   │
+│   ├── services/
+│   │   ├── mpesaService.js
+│   │   ├── pdfService.js
+│   │   ├── emailService.js
+│   │   ├── smsService.js
+│   │   ├── notificationService.js
+│   │   ├── reportService.js
+│   │   └── fileService.js
+│   │
+│   ├── utils/
+│   │   ├── generators.js
+│   │   ├── validators.js
+│   │   ├── helpers.js
+│   │   ├── formatters.js
+│   │   └── constants.js
+│   │
+│   └── validators/
+│       ├── userValidators.js
+│       ├── courseValidators.js
+│       ├── assignmentValidators.js
+│       ├── paymentValidators.js
+│       └── gradeValidators.js
+│
+├── views/
+│   ├── layouts/
+│   │   ├── layout.ejs
+│   │   ├── admin-layout.ejs
+│   │   ├── student-layout.ejs
+│   │   ├── instructor-layout.ejs
+│   │   └── finance-layout.ejs
+│   │
+│   ├── partials/
+│   │   ├── header.ejs
+│   │   ├── footer.ejs
+│   │   ├── admin-sidebar.ejs
+│   │   ├── student-sidebar.ejs
+│   │   ├── instructor-sidebar.ejs
+│   │   ├── finance-sidebar.ejs
+│   │   ├── notifications.ejs
+│   │   ├── flash-messages.ejs
+│   │   ├── pagination.ejs
+│   │   ├── user-profile.ejs
+│   │   └── modal-confirm.ejs
+│   │
+│   ├── auth/
+│   │   ├── login.ejs
+│   │   ├── register.ejs
+│   │   ├── forgot-password.ejs
+│   │   ├── reset-password.ejs
+│   │   └── verify-email.ejs
+│   │
+│   ├── admin/
+│   │   ├── dashboard.ejs
+│   │   │
+│   │   ├── users/
+│   │   │   ├── list.ejs
+│   │   │   ├── create.ejs
+│   │   │   ├── edit.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── students.ejs
+│   │   │   ├── instructors.ejs
+│   │   │   └── finance-officers.ejs
+│   │   │
+│   │   ├── courses/
+│   │   │   ├── list.ejs
+│   │   │   ├── create.ejs
+│   │   │   ├── edit.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── manage.ejs
+│   │   │   └── categories.ejs
+│   │   │
+│   │   ├── finance/
+│   │   │   ├── overview.ejs
+│   │   │   ├── payments.ejs
+│   │   │   ├── fees-structure.ejs
+│   │   │   ├── create-fee.ejs
+│   │   │   ├── edit-fee.ejs
+│   │   │   └── revenue-reports.ejs
+│   │   │
+│   │   ├── academic/
+│   │   │   ├── assignments.ejs
+│   │   │   ├── submissions.ejs
+│   │   │   ├── grades-overview.ejs
+│   │   │   └── enrollments.ejs
+│   │   │
+│   │   ├── system/
+│   │   │   ├── settings.ejs
+│   │   │   ├── notifications.ejs
+│   │   │   ├── audit-logs.ejs
+│   │   │   ├── backup.ejs
+│   │   │   └── system-health.ejs
+│   │   │
+│   │   ├── reports/
+│   │   │   ├── generate.ejs
+│   │   │   ├── student-reports.ejs
+│   │   │   ├── financial-reports.ejs
+│   │   │   ├── academic-reports.ejs
+│   │   │   ├── attendance-reports.ejs
+│   │   │   └── custom-reports.ejs
+│   │   │
+│   │   └── notifications/
+│   │       ├── list.ejs
+│   │       ├── create.ejs
+│   │       └── view.ejs
+│   │
+│   ├── student/
+│   │   ├── dashboard.ejs
+│   │   │
+│   │   ├── assignments/
+│   │   │   ├── list.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── submit.ejs
+│   │   │   └── submitted.ejs
+│   │   │
+│   │   ├── courses/
+│   │   │   ├── list.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── materials.ejs
+│   │   │   └── enroll.ejs
+│   │   │
+│   │   ├── payments/
+│   │   │   ├── history.ejs
+│   │   │   ├── make-payment.ejs
+│   │   │   ├── invoice.ejs
+│   │   │   ├── fee-statement.ejs
+│   │   │   └── payment-success.ejs
+│   │   │
+│   │   ├── grades/
+│   │   │   ├── overview.ejs
+│   │   │   ├── course-grades.ejs
+│   │   │   ├── transcript.ejs
+│   │   │   └── progress.ejs
+│   │   │
+│   │   ├── profile/
+│   │   │   ├── view.ejs
+│   │   │   ├── edit.ejs
+│   │   │   └── academic-record.ejs
+│   │   │
+│   │   └── notifications/
+│   │       ├── list.ejs
+│   │       └── view.ejs
+│   │
+│   ├── instructor/
+│   │   ├── dashboard.ejs
+│   │   │
+│   │   ├── courses/
+│   │   │   ├── list.ejs
+│   │   │   ├── create.ejs
+│   │   │   ├── edit.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── manage.ejs
+│   │   │   ├── students.ejs
+│   │   │   └── materials.ejs
+│   │   │
+│   │   ├── assignments/
+│   │   │   ├── list.ejs
+│   │   │   ├── create.ejs
+│   │   │   ├── edit.ejs
+│   │   │   ├── view.ejs
+│   │   │   ├── submissions.ejs
+│   │   │   └── grade.ejs
+│   │   │
+│   │   ├── grades/
+│   │   │   ├── manage.ejs
+│   │   │   ├── entry.ejs
+│   │   │   ├── report.ejs
+│   │   │   ├── generate-pdf.ejs
+│   │   │   └── gradebook.ejs
+│   │   │
+│   │   ├── attendance/
+│   │   │   ├── take.ejs
+│   │   │   ├── view.ejs
+│   │   │   └── reports.ejs
+│   │   │
+│   │   ├── profile/
+│   │   │   ├── view.ejs
+│   │   │   └── edit.ejs
+│   │   │
+│   │   └── notifications/
+│   │       ├── list.ejs
+│   │       ├── create.ejs
+│   │       └── view.ejs
+│   │
+│   └── finance/
+│       ├── dashboard.ejs
+│       │
+│       ├── payments/
+│       │   ├── overview.ejs
+│       │   ├── records.ejs
+│       │   ├── pending.ejs
+│       │   ├── verified.ejs
+│       │   └── reconciliation.ejs
+│       │
+│       ├── invoices/
+│       │   ├── generate.ejs
+│       │   ├── history.ejs
+│       │   ├── view.ejs
+│       │   └── send.ejs
+│       │
+│       ├── fees/
+│       │   ├── structure.ejs
+│       │   ├── create.ejs
+│       │   ├── edit.ejs
+│       │   └── categories.ejs
+│       │
+│       ├── reports/
+│       │   ├── financial.ejs
+│       │   ├── revenue.ejs
+│       │   ├── outstanding.ejs
+│       │   ├── collection.ejs
+│       │   └── export.ejs
+│       │
+│       ├── students/
+│       │   ├── fee-statements.ejs
+│       │   ├── outstanding.ejs
+│       │   └── payment-history.ejs
+│       │
+│       └── profile/
+│           ├── view.ejs
+│           └── edit.ejs
+│
+├── public/
+│   ├── css/
+│   │   ├── style.css
+│   │   ├── admin.css
+│   │   ├── student.css
+│   │   ├── instructor.css
+│   │   ├── finance.css
+│   │   ├── auth.css
+│   │   └── responsive.css
+│   │
+│   ├── js/
+│   │   ├── main.js
+│   │   ├── admin.js
+│   │   ├── student.js
+│   │   ├── instructor.js
+│   │   ├── finance.js
+│   │   ├── payments.js
+│   │   ├── assignments.js
+│   │   ├── notifications.js
+│   │   └── charts.js
+│   │
+│   ├── images/
+│   │   ├── logo.png
+│   │   ├── favicon.ico
+│   │   ├── avatars/
+│   │   └── icons/
+│   │
+│   ├── uploads/
+│   │   ├── assignments/
+│   │   ├── submissions/
+│   │   ├── course-materials/
+│   │   ├── profiles/
+│   │   ├── documents/
+│   │   └── temp/
+│   │
+│   └── documents/
+│       ├── templates/
+│       ├── reports/
+│       └── exports/
+│
+├── storage/
+│   ├── logs/
+│   │   ├── app.log
+│   │   ├── error.log
+│   │   ├── payment.log
+│   │   └── audit.log
+│   │
+│   ├── backups/
+│   ├── cache/
+│   └── temp/
+│
+├── tests/
+│   ├── unit/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── utils/
+│   │
+│   ├── integration/
+│   │   ├── auth/
+│   │   ├── payments/
+│   │   ├── academic/
+│   │   └── finance/
+│   │
+│   └── fixtures/
+│       ├── users.json
+│       ├── courses.json
+│       └── payments.json
+│
+└── docs/
+    ├── api/
+    │   ├── auth.md
+    │   ├── users.md
+    │   ├── payments.md
+    │   ├── academic.md
+    │   └── finance.md
+    │
+    ├── setup.md
+    ├── deployment.md
+    ├── mpesa-integration.md
+    └── user-guides/
+        ├── admin-guide.md
+        ├── student-guide.md
+        ├── instructor-guide.md
+        └── finance-guide.md

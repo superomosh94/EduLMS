@@ -1,0 +1,206 @@
+<aside class="admin-sidebar bg-dark">
+    <div class="sidebar-header text-center py-4">
+        <h5 class="text-white mb-0">Admin Panel</h5>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Dashboard
+                </a>
+            </li>
+            
+            <li class="nav-section">User Management</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'users' ? 'active' : '' %>" href="/admin/users">
+                    <i class="fas fa-users me-2"></i>
+                    All Users
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'students' ? 'active' : '' %>" href="/admin/users/students">
+                    <i class="fas fa-user-graduate me-2"></i>
+                    Students
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'instructors' ? 'active' : '' %>" href="/admin/users/instructors">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>
+                    Instructors
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/users/finance-officers">
+                    <i class="fas fa-money-check me-2"></i>
+                    Finance Officers
+                </a>
+            </li>
+            
+            <li class="nav-section">Academic</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'courses' ? 'active' : '' %>" href="/admin/courses">
+                    <i class="fas fa-book me-2"></i>
+                    Courses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'enrollments' ? 'active' : '' %>" href="/admin/enrollments">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Enrollments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'assignments' ? 'active' : '' %>" href="/admin/assignments">
+                    <i class="fas fa-tasks me-2"></i>
+                    Assignments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'grades' ? 'active' : '' %>" href="/admin/grades">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Grades Overview
+                </a>
+            </li>
+            
+            <li class="nav-section">Finance</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/finance">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Financial Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'payments' ? 'active' : '' %>" href="/admin/finance/payments">
+                    <i class="fas fa-credit-card me-2"></i>
+                    Payments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'fees' ? 'active' : '' %>" href="/admin/finance/fees-structure">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    Fee Structure
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/finance/revenue-reports">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Revenue Reports
+                </a>
+            </li>
+            
+            <li class="nav-section">System</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'settings' ? 'active' : '' %>" href="/admin/system/settings">
+                    <i class="fas fa-cog me-2"></i>
+                    System Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'notifications' ? 'active' : '' %>" href="/admin/system/notifications">
+                    <i class="fas fa-bell me-2"></i>
+                    Notifications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'audit' ? 'active' : '' %>" href="/admin/system/audit-logs">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Audit Logs
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'backup' ? 'active' : '' %>" href="/admin/system/backup">
+                    <i class="fas fa-database me-2"></i>
+                    Backup & Restore
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'health' ? 'active' : '' %>" href="/admin/system/system-health">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    System Health
+                </a>
+            </li>
+        </ul>
+    </nav>
+    
+    <div class="sidebar-footer mt-auto p-3">
+        <div class="system-status">
+            <div class="status-indicator online"></div>
+            <small class="text-light">System Online</small>
+        </div>
+    </div>
+</aside>
+
+<style>
+.admin-sidebar {
+    width: 250px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid #444;
+}
+
+.nav-section {
+    padding: 0.75rem 1rem;
+    color: #6c757d;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-nav .nav-link {
+    color: #b1b1b1;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+    border-left-color: #007bff;
+}
+
+.sidebar-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(0,123,255,0.2);
+    border-left-color: #007bff;
+}
+
+.sidebar-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    background-color: #28a745;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+</style>

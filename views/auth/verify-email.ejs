@@ -1,0 +1,75 @@
+<%- include('../layouts/layout', { 
+    title: 'Verify Email - EduLMS',
+    pageStyles: ['/css/auth.css']
+}) %>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header text-center mb-4">
+            <img src="/images/logo.png" alt="EduLMS Logo" class="auth-logo">
+            
+            <% if (verified) { %>
+                <div class="verification-success">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h2 class="auth-title">Email Verified!</h2>
+                    <p class="auth-subtitle">Your email has been successfully verified.</p>
+                </div>
+            <% } else if (expired) { %>
+                <div class="verification-expired">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h2 class="auth-title">Verification Link Expired</h2>
+                    <p class="auth-subtitle">This verification link has expired.</p>
+                </div>
+            <% } else if (invalid) { %>
+                <div class="verification-invalid">
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <h2 class="auth-title">Invalid Verification Link</h2>
+                    <p class="auth-subtitle">This verification link is invalid.</p>
+                </div>
+            <% } else { %>
+                <div class="verification-pending">
+                    <i class="fas fa-envelope fa-3x text-primary mb-3"></i>
+                    <h2 class="auth-title">Verify Your Email</h2>
+                    <p class="auth-subtitle">Please check your email for verification instructions.</p>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="text-center">
+            <% if (verified) { %>
+                <a href="/auth/login" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Proceed to Login
+                </a>
+            <% } else if (expired || invalid) { %>
+                <form action="/auth/resend-verification" method="POST" class="d-inline">
+                    <input type="hidden" name="email" value="<%= email %>">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Resend Verification Email
+                    </button>
+                </form>
+            <% } else { %>
+                <form action="/auth/resend-verification" method="POST" class="d-inline">
+                    <input type="hidden" name="email" value="<%= email %>">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Resend Email
+                    </button>
+                </form>
+            <% } %>
+        </div>
+        
+        <div class="auth-footer text-center mt-4">
+            <p class="mb-0">
+                <a href="/auth/login" class="text-decoration-none">Back to Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+.verification-success,
+.verification-expired,
+.verification-invalid,
+.verification-pending {
+    padding: 1rem 0;
+}
+</style>

@@ -1,0 +1,339 @@
+<%- include('../../layouts/instructor-layout', {
+    title: 'Instructor Dashboard - EduLMS',
+    pageTitle: 'Instructor Dashboard',
+    currentPage: 'dashboard',
+    breadcrumbs: [
+        { title: 'Instructor', url: '/instructor/dashboard', active: true }
+    ]
+}) %>
+
+<div class="row">
+    <!-- Welcome Card -->
+    <div class="col-12 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="card-title">Welcome back, <%= user.firstName %>!</h3>
+                        <p class="card-text mb-0">
+                            You have <strong><%= stats.pendingGrading || 0 %></strong> submissions to grade and 
+                            <strong><%= stats.activeCourses || 0 %></strong> active courses.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-chalkboard-teacher fa-4x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-book fa-2x"></i>
+                </div>
+                <h3 class="card-title"><%= stats.activeCourses || 0 %></h3>
+                <p class="card-text text-muted">Active Courses</p>
+                <a href="/instructor/courses" class="btn btn-sm btn-outline-primary">View Courses</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-user-graduate fa-2x"></i>
+                </div>
+                <h3 class="card-title"><%= stats.totalStudents || 0 %></h3>
+                <p class="card-text text-muted">Total Students</p>
+                <a href="/instructor/courses/students" class="btn btn-sm btn-outline-success">View Students</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-tasks fa-2x"></i>
+                </div>
+                <h3 class="card-title"><%= stats.pendingGrading || 0 %></h3>
+                <p class="card-text text-muted">Pending Grading</p>
+                <a href="/instructor/assignments/submissions" class="btn btn-sm btn-outline-warning">Grade Now</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <h3 class="card-title"><%= stats.averageAttendance || '0' %>%</h3>
+                <p class="card-text text-muted">Avg Attendance</p>
+                <a href="/instructor/attendance/view" class="btn btn-sm btn-outline-info">View Attendance</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Courses -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>My Courses
+                </h5>
+                <a href="/instructor/courses" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <% if (courses && courses.length > 0) { %>
+                        <% courses.forEach(course => { %>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><%= course.courseCode %> - <%= course.courseName %></h6>
+                                        <p class="card-text text-muted small mb-2">
+                                            <i class="fas fa-user-graduate me-1"></i><%= course.enrollmentCount %> students
+                                        </p>
+                                        <p class="card-text text-muted small mb-3">
+                                            <i class="fas fa-credit-card me-1"></i><%= course.credits %> credits • <%= course.semester %>
+                                        </p>
+                                        <div class="d-grid gap-1">
+                                            <a href="/instructor/courses/<%= course._id %>" class="btn btn-sm btn-outline-primary">View Course</a>
+                                            <a href="/instructor/courses/<%= course._id %>/students" class="btn btn-sm btn-outline-success">Students</a>
+                                            <a href="/instructor/assignments?course=<%= course._id %>" class="btn btn-sm btn-outline-warning">Assignments</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center py-4">
+                            <i class="fas fa-book fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No courses assigned</p>
+                            <a href="/instructor/courses/create" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Your First Course
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Calendar -->
+    <div class="col-md-4 mb-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/instructor/assignments/create" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Create Assignment
+                    </a>
+                    <a href="/instructor/attendance/take" class="btn btn-outline-success">
+                        <i class="fas fa-clipboard-check me-2"></i>Take Attendance
+                    </a>
+                    <a href="/instructor/grades/gradebook" class="btn btn-outline-warning">
+                        <i class="fas fa-chart-bar me-2"></i>Gradebook
+                    </a>
+                    <a href="/instructor/notifications/create" class="btn btn-outline-info">
+                        <i class="fas fa-bullhorn me-2"></i>Post Announcement
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Upcoming Deadlines
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (upcomingDeadlines && upcomingDeadlines.length > 0) { %>
+                    <div class="list-group list-group-flush">
+                        <% upcomingDeadlines.forEach(deadline => { %>
+                            <div class="list-group-item px-0">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1"><%= deadline.title %></h6>
+                                    <small class="text-<%= getDeadlineColor(deadline.dueDate) %>">
+                                        <%= getDaysRemaining(deadline.dueDate) %>
+                                    </small>
+                                </div>
+                                <p class="mb-1 small text-muted"><%= deadline.course.courseCode %></p>
+                                <small class="text-muted">
+                                    Due: <%= formatDate(deadline.dueDate) %>
+                                </small>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted mb-0">No upcoming deadlines</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-inbox me-2"></i>Recent Submissions
+                </h5>
+                <a href="/instructor/assignments/submissions" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Assignment</th>
+                                <th>Course</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (recentSubmissions && recentSubmissions.length > 0) { %>
+                                <% recentSubmissions.forEach(submission => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="<%= submission.student.user.avatar || '/images/avatars/default.png' %>" 
+                                                     alt="<%= submission.student.user.firstName %>" 
+                                                     class="rounded-circle me-2" width="32" height="32">
+                                                <div>
+                                                    <div class="fw-bold"><%= submission.student.user.firstName %> <%= submission.student.user.lastName %></div>
+                                                    <small class="text-muted"><%= submission.student.studentId %></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold"><%= submission.assignment.title %></div>
+                                            <small class="text-muted">Max: <%= submission.assignment.maxPoints %> pts</small>
+                                        </td>
+                                        <td><%= submission.assignment.course.courseCode %></td>
+                                        <td>
+                                            <div class="small">
+                                                <div><%= formatDate(submission.submittedAt) %></div>
+                                                <div class="text-muted"><%= formatTime(submission.submittedAt) %></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<%= submission.status === 'submitted' ? 'warning' : 'success' %>">
+                                                <%= submission.status %>
+                                            </span>
+                                            <% if (submission.isLate) { %>
+                                                <br>
+                                                <span class="badge bg-danger mt-1">Late</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/instructor/submissions/<%= submission._id %>" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <% if (submission.status === 'submitted') { %>
+                                                    <a href="/instructor/submissions/<%= submission._id %>/grade" class="btn btn-outline-success">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">No recent submissions</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getDeadlineColor(dueDate) {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'danger';
+    if (diffDays <= 2) return 'warning';
+    return 'success';
+}
+
+function getDaysRemaining(dueDate) {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'Overdue';
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return '1 day';
+    return diffDays + ' days';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.list-group-item {
+    border: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+</style>

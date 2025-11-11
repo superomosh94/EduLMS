@@ -1,0 +1,216 @@
+<%- include('../layouts/layout', { 
+    title: 'Register - EduLMS',
+    pageStyles: ['/css/auth.css']
+}) %>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header text-center mb-4">
+            <img src="/images/logo.png" alt="EduLMS Logo" class="auth-logo">
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join EduLMS today</p>
+        </div>
+        
+        <form action="/auth/register" method="POST" class="auth-form" id="registerForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= oldInput.firstName || '' %>" required>
+                        <% if (errors && errors.firstName) { %>
+                            <div class="invalid-feedback d-block"><%= errors.firstName.msg %></div>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" name="lastName" value="<%= oldInput.lastName || '' %>" required>
+                        <% if (errors && errors.lastName) { %>
+                            <div class="invalid-feedback d-block"><%= errors.lastName.msg %></div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" value="<%= oldInput.email || '' %>" required>
+                <% if (errors && errors.email) { %>
+                    <div class="invalid-feedback d-block"><%= errors.email.msg %></div>
+                <% } %>
+            </div>
+            
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input type="tel" class="form-control" id="phone" name="phone" value="<%= oldInput.phone || '' %>">
+                <% if (errors && errors.phone) { %>
+                    <div class="invalid-feedback d-block"><%= errors.phone.msg %></div>
+                <% } %>
+            </div>
+            
+            <div class="mb-3">
+                <label for="role" class="form-label">I am a</label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="">Select Role</option>
+                    <option value="student" <%= (oldInput.role === 'student') ? 'selected' : '' %>>Student</option>
+                    <option value="instructor" <%= (oldInput.role === 'instructor') ? 'selected' : '' %>>Instructor</option>
+                </select>
+                <% if (errors && errors.role) { %>
+                    <div class="invalid-feedback d-block"><%= errors.role.msg %></div>
+                <% } %>
+            </div>
+            
+            <!-- Student-specific fields -->
+            <div id="studentFields" style="display: none;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="studentId" class="form-label">Student ID</label>
+                            <input type="text" class="form-control" id="studentId" name="studentId" value="<%= oldInput.studentId || '' %>">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="program" class="form-label">Program</label>
+                            <select class="form-select" id="program" name="program">
+                                <option value="">Select Program</option>
+                                <option value="computer-science">Computer Science</option>
+                                <option value="business">Business Administration</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="arts">Arts & Sciences</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Instructor-specific fields -->
+            <div id="instructorFields" style="display: none;">
+                <div class="mb-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="">Select Department</option>
+                        <option value="computer-science">Computer Science</option>
+                        <option value="mathematics">Mathematics</option>
+                        <option value="physics">Physics</option>
+                        <option value="business">Business</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="qualifications" class="form-label">Qualifications</label>
+                    <textarea class="form-control" id="qualifications" name="qualifications" rows="3"><%= oldInput.qualifications || '' %></textarea>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="password-input-group">
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="form-text">
+                    Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.
+                </div>
+                <% if (errors && errors.password) { %>
+                    <div class="invalid-feedback d-block"><%= errors.password.msg %></div>
+                <% } %>
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <div class="password-input-group">
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="confirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <% if (errors && errors.confirmPassword) { %>
+                    <div class="invalid-feedback d-block"><%= errors.confirmPassword.msg %></div>
+                <% } %>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                <label class="form-check-label" for="terms">
+                    I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                </label>
+                <% if (errors && errors.terms) { %>
+                    <div class="invalid-feedback d-block"><%= errors.terms.msg %></div>
+                <% } %>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                <i class="fas fa-user-plus me-2"></i>Create Account
+            </button>
+        </form>
+        
+        <div class="auth-footer text-center mt-4">
+            <p class="mb-0">Already have an account? <a href="/auth/login" class="text-decoration-none">Sign in</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle role-specific fields
+document.getElementById('role').addEventListener('change', function() {
+    const role = this.value;
+    document.getElementById('studentFields').style.display = 'none';
+    document.getElementById('instructorFields').style.display = 'none';
+    
+    if (role === 'student') {
+        document.getElementById('studentFields').style.display = 'block';
+    } else if (role === 'instructor') {
+        document.getElementById('instructorFields').style.display = 'block';
+    }
+});
+
+// Trigger change event on page load to show/hide fields based on existing selection
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    if (roleSelect.value) {
+        roleSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Password validation
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+        return false;
+    }
+    
+    // Basic password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+        e.preventDefault();
+        alert('Password must be at least 8 characters long and contain uppercase, lowercase letters and numbers.');
+        return false;
+    }
+});
+
+// Toggle password visibility (reuse from login)
+document.querySelectorAll('.toggle-password').forEach(button => {
+    button.addEventListener('click', function() {
+        const targetId = this.dataset.target;
+        const passwordInput = document.getElementById(targetId);
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+});
+</script>

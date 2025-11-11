@@ -1,0 +1,80 @@
+<div class="modal fade" id="<%= modalId %>" tabindex="-1" aria-labelledby="<%= modalId %>Label" aria-hidden="true">
+    <div class="modal-dialog <%= size ? 'modal-' + size : '' %>">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="<%= modalId %>Label">
+                    <% if (icon) { %>
+                        <i class="<%= icon %> me-2"></i>
+                    <% } %>
+                    <%= title %>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <%= message %>
+                
+                <% if (form) { %>
+                    <form id="<%= modalId %>-form" method="<%= form.method || 'POST' %>" action="<%= form.action %>">
+                        <% if (form.fields) { %>
+                            <% form.fields.forEach(field => { %>
+                                <div class="mb-3">
+                                    <label for="<%= field.name %>" class="form-label"><%= field.label %></label>
+                                    <% if (field.type === 'textarea') { %>
+                                        <textarea class="form-control" id="<%= field.name %>" name="<%= field.name %>" rows="<%= field.rows || 3 %>" <%= field.required ? 'required' : '' %>><%= field.value || '' %></textarea>
+                                    <% } else if (field.type === 'select') { %>
+                                        <select class="form-select" id="<%= field.name %>" name="<%= field.name %>" <%= field.required ? 'required' : '' %>>
+                                            <% if (field.placeholder) { %>
+                                                <option value=""><%= field.placeholder %></option>
+                                            <% } %>
+                                            <% field.options.forEach(option => { %>
+                                                <option value="<%= option.value %>" <%= option.selected ? 'selected' : '' %>><%= option.label %></option>
+                                            <% }); %>
+                                        </select>
+                                    <% } else { %>
+                                        <input type="<%= field.type || 'text' %>" class="form-control" id="<%= field.name %>" name="<%= field.name %>" value="<%= field.value || '' %>" <%= field.required ? 'required' : '' %>>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </form>
+                <% } %>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-<%= confirmButtonType || 'primary' %>" id="<%= modalId %>-confirm">
+                    <i class="<%= confirmButtonIcon || 'fas fa-check' %> me-1"></i>
+                    <%= confirmButtonText || 'Confirm' %>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmButton = document.getElementById('<%= modalId %>-confirm');
+    const modal = new bootstrap.Modal(document.getElementById('<%= modalId %>'));
+    
+    confirmButton.addEventListener('click', function() {
+        <% if (form) { %>
+            const form = document.getElementById('<%= modalId %>-form');
+            if (form.checkValidity()) {
+                form.submit();
+            } else {
+                form.reportValidity();
+            }
+        <% } else { %>
+            // Handle simple confirmation
+            if (typeof window.confirmAction === 'function') {
+                window.confirmAction();
+            }
+            modal.hide();
+        <% } %>
+    });
+    
+    // Make modal accessible globally
+    window.<%= modalId %>Modal = modal;
+});
+</script>

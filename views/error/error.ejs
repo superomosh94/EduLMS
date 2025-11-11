@@ -1,0 +1,23 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1 text-muted"><%= error.status || 500 %></h1>
+            <h2 class="mb-4">Error</h2>
+            <p class="lead mb-4"><%= error.message %></p>
+            
+            <% if (error.stack && process.env.NODE_ENV === 'development') { %>
+                <div class="mt-4 text-start">
+                    <h6>Error Details (Development):</h6>
+                    <pre class="bg-light p-3 rounded text-danger"><%= error.stack %></pre>
+                </div>
+            <% } %>
+            
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-home"></i> Go Home
+            </a>
+            <button onclick="history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </button>
+        </div>
+    </div>
+</div>

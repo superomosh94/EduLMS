@@ -1,0 +1,40 @@
+<% if (totalPages > 1) { %>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <!-- Previous Page -->
+            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="<%= currentPage === 1 ? '#' : buildPageUrl(currentPage - 1) %>" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            
+            <!-- Page Numbers -->
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                        <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
+                    </li>
+                <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <% } %>
+            <% } %>
+            
+            <!-- Next Page -->
+            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="<%= currentPage === totalPages ? '#' : buildPageUrl(currentPage + 1) %>" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+<% } %>
+
+<script>
+function buildPageUrl(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    return url.toString();
+}
+</script>

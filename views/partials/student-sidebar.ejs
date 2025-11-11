@@ -1,0 +1,203 @@
+<aside class="student-sidebar bg-primary text-white">
+    <div class="sidebar-header text-center py-4">
+        <div class="student-avatar mb-3">
+            <img src="<%= user.avatar || '/images/avatars/default.png' %>" alt="Student Avatar" class="rounded-circle" width="80" height="80">
+        </div>
+        <h6 class="mb-1"><%= user.firstName %> <%= user.lastName %></h6>
+        <small class="text-light">Student</small>
+        <div class="student-id mt-2">
+            <small>ID: <%= user.studentId || 'N/A' %></small>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/student/dashboard">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Dashboard
+                </a>
+            </li>
+            
+            <li class="nav-section">Academic</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'courses' ? 'active' : '' %>" href="/student/courses">
+                    <i class="fas fa-book me-2"></i>
+                    My Courses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'enroll' ? 'active' : '' %>" href="/student/courses/enroll">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Enroll in Courses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'materials' ? 'active' : '' %>" href="/student/courses/materials">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Course Materials
+                </a>
+            </li>
+            
+            <li class="nav-section">Assignments</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'assignments' ? 'active' : '' %>" href="/student/assignments">
+                    <i class="fas fa-tasks me-2"></i>
+                    My Assignments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'submissions' ? 'active' : '' %>" href="/student/assignments/submitted">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Submitted Work
+                </a>
+            </li>
+            
+            <li class="nav-section">Grades</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'grades' ? 'active' : '' %>" href="/student/grades">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Grade Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'transcript' ? 'active' : '' %>" href="/student/grades/transcript">
+                    <i class="fas fa-file-certificate me-2"></i>
+                    Academic Transcript
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'progress' ? 'active' : '' %>" href="/student/grades/progress">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Progress Tracking
+                </a>
+            </li>
+            
+            <li class="nav-section">Finance</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'payments' ? 'active' : '' %>" href="/student/payments">
+                    <i class="fas fa-credit-card me-2"></i>
+                    Payment History
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'fee-statement' ? 'active' : '' %>" href="/student/payments/fee-statement">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    Fee Statement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'make-payment' ? 'active' : '' %>" href="/student/payments/make-payment">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    Make Payment
+                </a>
+            </li>
+            
+            <li class="nav-section">Profile</li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'profile' ? 'active' : '' %>" href="/student/profile">
+                    <i class="fas fa-user me-2"></i>
+                    My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= currentPage === 'academic-record' ? 'active' : '' %>" href="/student/profile/academic-record">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Academic Record
+                </a>
+            </li>
+        </ul>
+    </nav>
+    
+    <div class="sidebar-footer mt-auto p-3">
+        <div class="quick-stats">
+            <div class="stat-item">
+                <small>Current GPA</small>
+                <div class="stat-value"><%= currentGPA || '4.0' %></div>
+            </div>
+            <div class="stat-item">
+                <small>Enrolled Courses</small>
+                <div class="stat-value"><%= enrolledCourses || '0' %></div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<style>
+.student-sidebar {
+    width: 280px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.student-avatar img {
+    border: 3px solid rgba(255,255,255,0.2);
+}
+
+.nav-section {
+    padding: 0.75rem 1rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+}
+
+.sidebar-nav .nav-link {
+    color: rgba(255,255,255,0.8);
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+    border-left-color: #fff;
+}
+
+.sidebar-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(255,255,255,0.2);
+    border-left-color: #fff;
+}
+
+.sidebar-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 0.375rem;
+}
+
+.stat-item small {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+</style>

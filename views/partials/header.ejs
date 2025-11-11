@@ -1,0 +1,118 @@
+<header class="main-header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand" href="/">
+                <img src="/images/logo.png" alt="EduLMS Logo" height="40" class="d-inline-block align-text-top">
+                <span class="brand-text">EduLMS</span>
+            </a>
+            
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <% if (user) { %>
+                        <% if (user.role === 'admin') { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                            </li>
+                        <% } else if (user.role === 'student') { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/courses">My Courses</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/assignments">Assignments</a>
+                            </li>
+                        <% } else if (user.role === 'instructor') { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/instructor/dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/instructor/courses">My Courses</a>
+                            </li>
+                        <% } else if (user.role === 'finance') { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/finance/dashboard">Dashboard</a>
+                            </li>
+                        <% } %>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/about">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/contact">Contact</a>
+                        </li>
+                    <% } %>
+                </ul>
+                
+                <!-- Right Navigation -->
+                <ul class="navbar-nav ms-auto">
+                    <% if (user) { %>
+                        <!-- Notifications -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell"></i>
+                                <% if (unreadNotifications && unreadNotifications > 0) { %>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        <%= unreadNotifications %>
+                                    </span>
+                                <% } %>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                                <h6 class="dropdown-header">Notifications</h6>
+                                <div class="notification-list">
+                                    <!-- Notifications will be loaded here -->
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-center" href="/notifications">View All</a>
+                            </div>
+                        </li>
+                        
+                        <!-- User Menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <img src="<%= user.avatar || '/images/avatars/default.png' %>" alt="User Avatar" class="rounded-circle me-2" width="32" height="32">
+                                <%= user.firstName %> <%= user.lastName %>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/profile">
+                                        <i class="fas fa-user me-2"></i>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/settings">
+                                        <i class="fas fa-cog me-2"></i>Settings
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="/auth/logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/register">Register</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>

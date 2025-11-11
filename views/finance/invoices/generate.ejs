@@ -1,0 +1,522 @@
+<%- include('../../../layouts/finance-layout', {
+    title: 'Generate Invoice - EduLMS',
+    pageTitle: 'Generate Invoice',
+    currentPage: 'generate-invoice',
+    breadcrumbs: [
+        { title: 'Finance', url: '/finance/dashboard' },
+        { title: 'Invoices', url: '/finance/invoices/history' },
+        { title: 'Generate Invoice', url: '/finance/invoices/generate', active: true }
+    ],
+    headerActions: [
+        { url: '/finance/invoices/history', text: 'Invoice History', icon: 'fas fa-history', class: 'btn-outline-primary' }
+    ]
+}) %>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>Invoice Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="/finance/invoices/generate" method="POST" id="invoiceForm">
+                    <!-- Student Selection -->
+                    <div class="mb-4">
+                        <label for="studentId" class="form-label fw-bold">Select Student</label>
+                        <select class="form-select" id="studentId" name="studentId" required>
+                            <option value="">Choose a student...</option>
+                            <% if (students && students.length > 0) { %>
+                                <% students.forEach(student => { %>
+                                    <option value="<%= student._id %>" 
+                                            data-program="<%= student.program %>"
+                                            data-academic-year="<%= student.academicYear %>"
+                                            data-semester="<%= student.semester %>">
+                                        <%= student.studentId %> - <%= student.user.firstName %> <%= student.user.lastName %> - <%= student.program %>
+                                    </option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                        <div class="form-text">Select the student to generate invoice for</div>
+                    </div>
+
+                    <!-- Student Information -->
+                    <div id="studentInfo" class="card bg-light mb-4" style="display: none;">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Student Information</h6>
+                                    <p class="mb-1" id="infoName"><strong>Name:</strong> -</p>
+                                    <p class="mb-1" id="infoStudentId"><strong>Student ID:</strong> -</p>
+                                    <p class="mb-1" id="infoProgram"><strong>Program:</strong> -</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Academic Information</h6>
+                                    <p class="mb-1" id="infoAcademicYear"><strong>Academic Year:</strong> -</p>
+                                    <p class="mb-1" id="infoSemester"><strong>Semester:</strong> -</p>
+                                    <p class="mb-0" id="infoFeeBalance"><strong>Current Balance:</strong> -</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fee Structure Selection -->
+                    <div class="mb-4">
+                        <label for="feeStructureId" class="form-label fw-bold">Fee Structure</label>
+                        <select class="form-select" id="feeStructureId" name="feeStructureId" required>
+                            <option value="">Select fee structure...</option>
+                            <% if (feeStructures && feeStructures.length > 0) { %>
+                                <% feeStructures.forEach(fee => { %>
+                                    <option value="<%= fee._id %>" data-amount="<%= fee.amount %>">
+                                        <%= fee.name %> - $<%= fee.amount %> (<%= fee.academicYear %> - <%= fee.semester %>)
+                                    </option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                        <div class="form-text">Select the applicable fee structure</div>
+                    </div>
+
+                    <!-- Invoice Items -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Invoice Items</label>
+                        <div id="invoiceItems">
+                            <!-- Base Fee Item -->
+                            <div class="invoice-item card mb-2">
+                                <div class="card-body py-2">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-5">
+                                            <input type="text" class="form-control form-control-sm" name="items[0][description]" 
+                                                   value="Tuition Fee" readonly>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm" name="items[0][amount]" 
+                                                   id="baseAmount" value="0" readonly>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm" name="items[0][quantity]" value="1" readonly>
+                                        </div>
+                                        <div class="col-md-1 text-center">
+                                            <span class="text-muted">Base</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Charges -->
+                        <div id="additionalCharges">
+                            <div class="additional-item card mb-2">
+                                <div class="card-body py-2">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-5">
+                                            <input type="text" class="form-control form-control-sm" name="additionalCharges[0][description]" 
+                                                   placeholder="Description (e.g., Library Fee, Lab Fee)">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm" name="additionalCharges[0][amount]" 
+                                                   placeholder="Amount" min="0" step="0.01">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm" name="additionalCharges[0][quantity]" 
+                                                   value="1" min="1">
+                                        </div>
+                                        <div class="col-md-1 text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-item" disabled>
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="addCharge" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="fas fa-plus me-1"></i>Add Additional Charge
+                        </button>
+                    </div>
+
+                    <!-- Total Amount -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 offset-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>Total Amount:</strong>
+                                        <span id="totalAmount" class="h4 text-success mb-0">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Due Date -->
+                    <div class="mb-4">
+                        <label for="dueDate" class="form-label fw-bold">Due Date</label>
+                        <input type="date" class="form-control" id="dueDate" name="dueDate" required>
+                        <div class="form-text">Set the due date for this invoice</div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label fw-bold">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Add any additional notes or instructions for the student..."></textarea>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="save" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Generate Invoice
+                        </button>
+                        <button type="submit" name="action" value="save_send" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-2"></i>Generate & Send Email
+                        </button>
+                        <a href="/finance/invoices/history" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-eye me-2"></i>Invoice Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="invoicePreview" class="invoice-preview">
+                    <div class="text-center mb-4">
+                        <h4 class="text-primary">EDULMS INSTITUTION</h4>
+                        <p class="text-muted mb-0">Invoice Preview</p>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Invoice To:</strong>
+                            <div id="previewStudent" class="text-muted">-</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <strong>Invoice Date:</strong>
+                            <div id="previewDate" class="text-muted"><%= new Date().toLocaleDateString() %></div>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewItems">
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No items added</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="previewTotal" style="display: none;">
+                            <tr>
+                                <th class="text-end">Total:</th>
+                                <th class="text-end">$0.00</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="mt-3">
+                        <strong>Due Date:</strong>
+                        <span id="previewDueDate" class="text-muted">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/finance/fees/structure" class="btn btn-outline-primary">
+                        <i class="fas fa-table me-2"></i>Manage Fee Structures
+                    </a>
+                    <a href="/finance/students/fee-statements" class="btn btn-outline-info">
+                        <i class="fas fa-file-alt me-2"></i>View Fee Statements
+                    </a>
+                    <a href="/finance/invoices/history" class="btn btn-outline-secondary">
+                        <i class="fas fa-history me-2"></i>Invoice History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let itemCount = 1;
+let additionalCount = 0;
+
+// Update student information when selected
+document.getElementById('studentId').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const studentInfo = document.getElementById('studentInfo');
+    
+    if (this.value) {
+        studentInfo.style.display = 'block';
+        document.getElementById('infoName').innerHTML = `<strong>Name:</strong> ${selectedOption.text.split(' - ')[1]}`;
+        document.getElementById('infoStudentId').innerHTML = `<strong>Student ID:</strong> ${selectedOption.text.split(' - ')[0]}`;
+        document.getElementById('infoProgram').innerHTML = `<strong>Program:</strong> ${selectedOption.dataset.program}`;
+        document.getElementById('infoAcademicYear').innerHTML = `<strong>Academic Year:</strong> ${selectedOption.dataset.academicYear}`;
+        document.getElementById('infoSemester').innerHTML = `<strong>Semester:</strong> ${selectedOption.dataset.semester}`;
+        
+        // Update preview
+        document.getElementById('previewStudent').textContent = selectedOption.text.split(' - ')[1];
+    } else {
+        studentInfo.style.display = 'none';
+        document.getElementById('previewStudent').textContent = '-';
+    }
+});
+
+// Update base amount when fee structure is selected
+document.getElementById('feeStructureId').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const baseAmountInput = document.getElementById('baseAmount');
+    
+    if (this.value && selectedOption.dataset.amount) {
+        baseAmountInput.value = selectedOption.dataset.amount;
+        updateTotalAmount();
+        updatePreview();
+    } else {
+        baseAmountInput.value = '0';
+        updateTotalAmount();
+        updatePreview();
+    }
+});
+
+// Add additional charge
+document.getElementById('addCharge').addEventListener('click', function() {
+    additionalCount++;
+    const newItem = `
+        <div class="additional-item card mb-2">
+            <div class="card-body py-2">
+                <div class="row align-items-center">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control form-control-sm" name="additionalCharges[${additionalCount}][description]" 
+                               placeholder="Description (e.g., Library Fee, Lab Fee)">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" class="form-control form-control-sm charge-amount" 
+                               name="additionalCharges[${additionalCount}][amount]" placeholder="Amount" min="0" step="0.01">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" class="form-control form-control-sm charge-quantity" 
+                               name="additionalCharges[${additionalCount}][quantity]" value="1" min="1">
+                    </div>
+                    <div class="col-md-1 text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('additionalCharges').insertAdjacentHTML('beforeend', newItem);
+    
+    // Enable remove button for the first item if this is the second item
+    if (additionalCount === 1) {
+        document.querySelector('.remove-item').disabled = false;
+    }
+    
+    // Add event listeners to new inputs
+    const newInputs = document.querySelectorAll('.additional-item:last-child input');
+    newInputs.forEach(input => {
+        input.addEventListener('input', updateTotalAmount);
+        input.addEventListener('input', updatePreview);
+    });
+});
+
+// Remove item
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item') && !e.target.closest('.remove-item').disabled) {
+        const item = e.target.closest('.additional-item');
+        item.remove();
+        additionalCount--;
+        updateTotalAmount();
+        updatePreview();
+        
+        // Disable remove button if only one item remains
+        if (additionalCount === 0) {
+            document.querySelector('.remove-item').disabled = true;
+        }
+    }
+});
+
+// Update due date preview
+document.getElementById('dueDate').addEventListener('change', function() {
+    document.getElementById('previewDueDate').textContent = this.value ? 
+        new Date(this.value).toLocaleDateString() : '-';
+});
+
+// Calculate total amount
+function updateTotalAmount() {
+    let total = 0;
+    
+    // Base amount
+    const baseAmount = parseFloat(document.getElementById('baseAmount').value) || 0;
+    total += baseAmount;
+    
+    // Additional charges
+    const amountInputs = document.querySelectorAll('.charge-amount');
+    const quantityInputs = document.querySelectorAll('.charge-quantity');
+    
+    for (let i = 0; i < amountInputs.length; i++) {
+        const amount = parseFloat(amountInputs[i].value) || 0;
+        const quantity = parseFloat(quantityInputs[i].value) || 1;
+        total += amount * quantity;
+    }
+    
+    document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+}
+
+// Update preview
+function updatePreview() {
+    const previewItems = document.getElementById('previewItems');
+    const previewTotal = document.getElementById('previewTotal');
+    
+    let itemsHTML = '';
+    let total = 0;
+    
+    // Base fee
+    const baseAmount = parseFloat(document.getElementById('baseAmount').value) || 0;
+    if (baseAmount > 0) {
+        itemsHTML += `
+            <tr>
+                <td>Tuition Fee</td>
+                <td class="text-end">$${baseAmount.toFixed(2)}</td>
+            </tr>
+        `;
+        total += baseAmount;
+    }
+    
+    // Additional charges
+    const amountInputs = document.querySelectorAll('.charge-amount');
+    const quantityInputs = document.querySelectorAll('.charge-quantity');
+    const descriptionInputs = document.querySelectorAll('input[name^="additionalCharges"][name$="[description]"]');
+    
+    for (let i = 0; i < amountInputs.length; i++) {
+        const amount = parseFloat(amountInputs[i].value) || 0;
+        const quantity = parseFloat(quantityInputs[i].value) || 1;
+        const description = descriptionInputs[i].value;
+        
+        if (description && amount > 0) {
+            const itemTotal = amount * quantity;
+            itemsHTML += `
+                <tr>
+                    <td>${description}</td>
+                    <td class="text-end">$${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+            total += itemTotal;
+        }
+    }
+    
+    if (itemsHTML === '') {
+        previewItems.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No items added</td></tr>';
+        previewTotal.style.display = 'none';
+    } else {
+        previewItems.innerHTML = itemsHTML;
+        previewTotal.innerHTML = `
+            <tr>
+                <th class="text-end">Total:</th>
+                <th class="text-end">$${total.toFixed(2)}</th>
+            </tr>
+        `;
+        previewTotal.style.display = 'table-footer-group';
+    }
+}
+
+// Initialize event listeners for existing inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateTotalAmount);
+        input.addEventListener('input', updatePreview);
+    });
+    
+    // Set minimum due date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dueDate').min = today;
+    
+    // Initialize preview date
+    document.getElementById('previewDate').textContent = new Date().toLocaleDateString();
+});
+
+// Form validation
+document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+    const studentId = document.getElementById('studentId').value;
+    const feeStructureId = document.getElementById('feeStructureId').value;
+    const dueDate = document.getElementById('dueDate').value;
+    const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('$', '')) || 0;
+    
+    if (!studentId) {
+        e.preventDefault();
+        alert('Please select a student');
+        return false;
+    }
+    
+    if (!feeStructureId) {
+        e.preventDefault();
+        alert('Please select a fee structure');
+        return false;
+    }
+    
+    if (!dueDate) {
+        e.preventDefault();
+        alert('Please set a due date');
+        return false;
+    }
+    
+    if (totalAmount <= 0) {
+        e.preventDefault();
+        alert('Total amount must be greater than 0');
+        return false;
+    }
+});
+</script>
+
+<style>
+.invoice-preview {
+    font-size: 0.9rem;
+}
+
+.invoice-item, .additional-item {
+    border-left: 3px solid #007bff;
+}
+
+.additional-item {
+    border-left-color: #28a745;
+}
+
+.remove-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-text {
+    font-size: 0.8rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+</style>

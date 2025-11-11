@@ -1,0 +1,352 @@
+<%- include('../../../layouts/instructor-layout', {
+    title: 'My Courses - EduLMS',
+    pageTitle: 'My Courses',
+    currentPage: 'courses',
+    breadcrumbs: [
+        { title: 'Instructor', url: '/instructor/dashboard' },
+        { title: 'Courses', url: '/instructor/courses', active: true }
+    ],
+    headerActions: [
+        { url: '/instructor/courses/create', text: 'Create Course', icon: 'fas fa-plus', class: 'btn-primary' }
+    ]
+}) %>
+
+<div class="row">
+    <!-- Course Statistics -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= stats.totalCourses || 0 %></h3>
+                                <p class="mb-0">Total Courses</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-book fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= stats.activeCourses || 0 %></h3>
+                                <p class="mb-0">Active Courses</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-play-circle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= stats.totalStudents || 0 %></h3>
+                                <p class="mb-0">Total Students</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-user-graduate fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= stats.pendingAssignments || 0 %></h3>
+                                <p class="mb-0">Pending Grading</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-tasks fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Filters -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>Filter Courses
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="filtersForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="academicYear" class="form-label">Academic Year</label>
+                        <select class="form-select" id="academicYear" name="academicYear">
+                            <option value="">All Years</option>
+                            <option value="2024" <%= filters.academicYear === '2024' ? 'selected' : '' %>>2024</option>
+                            <option value="2023" <%= filters.academicYear === '2023' ? 'selected' : '' %>>2023</option>
+                            <option value="2022" <%= filters.academicYear === '2022' ? 'selected' : '' %>>2022</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="semester" class="form-label">Semester</label>
+                        <select class="form-select" id="semester" name="semester">
+                            <option value="">All Semesters</option>
+                            <option value="1" <%= filters.semester === '1' ? 'selected' : '' %>>Semester 1</option>
+                            <option value="2" <%= filters.semester === '2' ? 'selected' : '' %>>Semester 2</option>
+                            <option value="3" <%= filters.semester === '3' ? 'selected' : '' %>>Semester 3</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Status</option>
+                            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="archived" <%= filters.status === 'archived' ? 'selected' : '' %>>Archived</option>
+                            <option value="draft" <%= filters.status === 'draft' ? 'selected' : '' %>>Draft</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">All Departments</option>
+                            <option value="computer-science" <%= filters.department === 'computer-science' ? 'selected' : '' %>>Computer Science</option>
+                            <option value="mathematics" <%= filters.department === 'mathematics' ? 'selected' : '' %>>Mathematics</option>
+                            <option value="physics" <%= filters.department === 'physics' ? 'selected' : '' %>>Physics</option>
+                            <option value="business" <%= filters.department === 'business' ? 'selected' : '' %>>Business</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <a href="/instructor/courses" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>My Courses
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog me-2"></i>Actions
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/instructor/courses/create">
+                                <i class="fas fa-plus me-2"></i>Create New Course
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/instructor/courses/students">
+                                <i class="fas fa-user-graduate me-2"></i>View All Students
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="/instructor/assignments/create">
+                                <i class="fas fa-tasks me-2"></i>Create Assignment
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <% if (courses && courses.length > 0) { %>
+                    <div class="row">
+                        <% courses.forEach(course => { %>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card course-card h-100">
+                                    <div class="card-header bg-<%= getStatusColor(course.status) %> text-white">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="card-title mb-0"><%= course.courseCode %></h6>
+                                            <span class="badge bg-light text-dark"><%= course.status %></span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title"><%= course.courseName %></h5>
+                                        <p class="card-text text-muted"><%= course.description ? course.description.substring(0, 100) + '...' : 'No description' %></p>
+                                        
+                                        <div class="course-meta mb-3">
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <div class="fw-bold text-primary"><%= course.credits %></div>
+                                                    <small class="text-muted">Credits</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="fw-bold text-success"><%= course.enrollmentCount || 0 %></div>
+                                                    <small class="text-muted">Students</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="fw-bold text-warning"><%= course.assignmentCount || 0 %></div>
+                                                    <small class="text-muted">Assignments</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="course-info small text-muted mb-3">
+                                            <div class="mb-1">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                <%= course.academicYear %> - Semester <%= course.semester %>
+                                            </div>
+                                            <div class="mb-1">
+                                                <i class="fas fa-building me-1"></i>
+                                                <%= course.department %>
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-users me-1"></i>
+                                                Max: <%= course.maxStudents %> students
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <div class="btn-group w-100">
+                                            <a href="/instructor/courses/<%= course._id %>" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="/instructor/courses/<%= course._id %>/edit" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="/instructor/courses/<%= course._id %>/students" class="btn btn-outline-info btn-sm">
+                                                <i class="fas fa-user-graduate"></i>
+                                            </a>
+                                            <a href="/instructor/assignments?course=<%= course._id %>" class="btn btn-outline-warning btn-sm">
+                                                <i class="fas fa-tasks"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (totalPages > 1) { %>
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted">
+                                Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, total) %> of <%= total %> courses
+                            </div>
+                            <%- include('../../../partials/pagination', {
+                                currentPage: currentPage,
+                                totalPages: totalPages,
+                                buildPageUrl: function(page) {
+                                    const params = new URLSearchParams(filters);
+                                    params.set('page', page);
+                                    return '/instructor/courses?' + params.toString();
+                                }
+                            }) %>
+                        </div>
+                    <% } %>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Courses Found</h4>
+                        <p class="text-muted mb-4">You haven't created any courses yet or no courses match your filters.</p>
+                        <a href="/instructor/courses/create" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Create Your First Course
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getStatusColor(status) {
+    const colors = {
+        'active': 'success',
+        'archived': 'secondary',
+        'draft': 'warning',
+        'pending': 'info'
+    };
+    return colors[status] || 'primary';
+}
+
+// Course card hover effects
+document.addEventListener('DOMContentLoaded', function() {
+    const courseCards = document.querySelectorAll('.course-card');
+    courseCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+
+// Quick actions for courses
+function quickAction(courseId, action) {
+    switch(action) {
+        case 'view':
+            window.location.href = `/instructor/courses/${courseId}`;
+            break;
+        case 'students':
+            window.location.href = `/instructor/courses/${courseId}/students`;
+            break;
+        case 'assignments':
+            window.location.href = `/instructor/assignments?course=${courseId}`;
+            break;
+        case 'materials':
+            window.location.href = `/instructor/courses/${courseId}/materials`;
+            break;
+    }
+}
+</script>
+
+<style>
+.course-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.course-card:hover {
+    border-color: #007bff;
+}
+
+.course-meta {
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 0;
+}
+
+.course-info {
+    font-size: 0.85rem;
+}
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+</style>
