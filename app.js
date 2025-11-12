@@ -47,6 +47,11 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
+const localsMiddleware = require('./app/middleware/locals');
+
+// After session middleware but before routes
+app.use(localsMiddleware); 
+
 app.use(compression());
 
 // Rate limiting

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'User Management - EduLMS' %></title>
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .users-table {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        
+        .user-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            align-items: center;
+        }
+        
+        .user-row:hover {
+            background: var(--gray-50);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .user-details h4 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .user-details p {
+            margin: 0;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-inactive {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+        
+        .no-users {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">User Management</h1>
+            <a href="/admin/users/create" class="btn">+ Add User</a>
+        </div>
+
+        <div class="users-table">
+            <div class="table-header">
+                <div>User</div>
+                <div>Role</div>
+                <div>Status</div>
+                <div>Joined</div>
+                <div>Actions</div>
+            </div>
+
+            <% if (typeof users !== 'undefined' && users.length > 0) { %>
+                <% users.forEach(user => { %>
+                <div class="user-row">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <%= user.initials || 'U' %>
+                        </div>
+                        <div class="user-details">
+                            <h4><%= user.name || 'Unknown User' %></h4>
+                            <p><%= user.email || 'No email' %></p>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="role-badge"><%= user.role || 'user' %></span>
+                    </div>
+                    <div>
+                        <span class="status-badge <%= user.is_active ? 'status-active' : 'status-inactive' %>">
+                            <%= user.is_active ? 'Active' : 'Inactive' %>
+                        </span>
+                    </div>
+                    <div>
+                        <%= user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown' %>
+                    </div>
+                    <div>
+                        <a href="/admin/users/<%= user.id %>" style="color: var(--primary-blue); text-decoration: none;">View</a>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div class="no-users">
+                    <p>No users found</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

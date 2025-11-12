@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - EduLMS</title>
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.875rem; font-weight: 700; margin-bottom: 2rem; }
+        .settings-card { background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; }
+        .btn { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">System Settings</h1>
+        
+        <div class="settings-card">
+            <h2>General Settings</h2>
+            <form action="/admin/system/settings" method="POST">
+                <div class="form-group">
+                    <label>System Name</label>
+                    <input type="text" name="system_name" value="EduLMS" required>
+                </div>
+                <div class="form-group">
+                    <label>Support Email</label>
+                    <input type="email" name="support_email" value="support@edulms.edu" required>
+                </div>
+                <div class="form-group">
+                    <label>Default Timezone</label>
+                    <select name="timezone">
+                        <option value="Africa/Nairobi" selected>East Africa Time (EAT)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

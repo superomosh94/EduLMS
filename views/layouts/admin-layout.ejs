@@ -3,130 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'Admin - EduLMS' %></title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/style.css">
-    
+    <title><%= title || 'Admin - EduLMS' %></title>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 64px;
         }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
         .admin-sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-800) 100%);
             color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
         }
+
+        .admin-main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            background-color: var(--gray-50);
+        }
+
+        .admin-header {
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
         .admin-content {
-            min-height: 100vh;
+            padding: var(--spacing-xl);
         }
-        .sidebar-link {
-            color: white;
+
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-700);
+            text-align: center;
+        }
+
+        .sidebar-nav {
+            padding: var(--spacing-lg) 0;
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .nav-title {
+            padding: 0 var(--spacing-lg) var(--spacing-sm);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            font-weight: 600;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            color: var(--gray-300);
             text-decoration: none;
-            padding: 0.75rem 1rem;
-            display: block;
-            border-radius: 5px;
-            margin-bottom: 0.25rem;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
         }
-        .sidebar-link:hover, .sidebar-link.active {
-            background: rgba(255,255,255,0.1);
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
             color: white;
+            border-left-color: var(--primary-blue);
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .stat-card {
+            background: white;
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid;
+        }
+
+        .stat-card.primary {
+            border-left-color: var(--primary-blue);
+        }
+
+        .stat-card.success {
+            border-left-color: var(--success);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .stat-card.purple {
+            border-left-color: var(--secondary-purple);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.75rem;
+            margin-top: var(--spacing-sm);
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 admin-sidebar p-0">
-                <div class="p-3">
-                    <a class="navbar-brand text-white d-block text-center mb-4" href="/admin/dashboard">
-                        <img src="/images/logo.png" alt="EduLMS Logo" height="40">
-                        <span class="ms-2 fw-bold">EduLMS Admin</span>
-                    </a>
-                    
-                    <nav class="nav flex-column">
-                        <a class="sidebar-link <%= typeof currentPage !== 'undefined' && currentPage === 'dashboard' ? 'active' : '' %>" 
-                           href="/admin/dashboard">
-                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                        </a>
-                        <a class="sidebar-link <%= typeof currentPage !== 'undefined' && currentPage === 'users' ? 'active' : '' %>" 
-                           href="/admin/users">
-                            <i class="fas fa-users me-2"></i>Users
-                        </a>
-                        <a class="sidebar-link <%= typeof currentPage !== 'undefined' && currentPage === 'students' ? 'active' : '' %>" 
-                           href="/admin/students">
-                            <i class="fas fa-user-graduate me-2"></i>Students
-                        </a>
-                        <a class="sidebar-link <%= typeof currentPage !== 'undefined' && currentPage === 'instructors' ? 'active' : '' %>" 
-                           href="/admin/instructors">
-                            <i class="fas fa-chalkboard-teacher me-2"></i>Instructors
-                        </a>
-                        <a class="sidebar-link" href="/auth/logout">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
-                    </nav>
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 admin-content">
-                <!-- Top Navigation -->
-                <nav class="navbar navbar-light bg-white shadow-sm">
-                    <div class="container-fluid">
-                        <span class="navbar-text">
-                            <i class="fas fa-user-shield me-2"></i>
-                            Admin Panel
-                        </span>
-                        <div class="d-flex">
-                            <span class="navbar-text me-3">
-                                Welcome, <%= typeof user !== 'undefined' && user ? user.name : 'Admin' %>
-                            </span>
-                        </div>
-                    </div>
-                </nav>
-
-                <!-- Flash Messages -->
-                <% if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) { %>
-                    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-                        <%= success_msg %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <% } %>
-                
-                <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
-                    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
-                        <%= error_msg %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <% } %>
-
-                <!-- Page Content -->
-                <div class="p-4">
-                    <% if (typeof pageTitle !== 'undefined') { %>
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h1 class="h3 mb-0"><%= pageTitle %></h1>
-                        </div>
-                    <% } %>
-                    
-                    <%- body %>
-                </div>
-            </div>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar') %>
+        
+        <div class="admin-main">
+            <%- include('../partials/header') %>
+            
+            <main class="admin-content">
+                <%- include('../partials/flash-messages') %>
+                <%- body %>
+            </main>
         </div>
     </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Custom JS -->
-    <script src="/js/main.js"></script>
 </body>
 </html>

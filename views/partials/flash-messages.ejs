@@ -1,67 +1,30 @@
-<% if (messages && messages.length > 0) { %>
+<% 
+  // Collect all flash messages from different variables
+  const allMessages = [];
+  
+  // Check success messages
+  if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) {
+    success_msg.forEach(msg => allMessages.push({ type: 'success', text: msg }));
+  }
+  
+  // Check error messages  
+  if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) {
+    error_msg.forEach(msg => allMessages.push({ type: 'danger', text: msg }));
+  }
+  
+  // Check generic error messages
+  if (typeof error !== 'undefined' && error && error.length > 0) {
+    error.forEach(msg => allMessages.push({ type: 'danger', text: msg }));
+  }
+%>
+
+<% if (allMessages.length > 0) { %>
     <div class="flash-messages-container">
-        <% messages.forEach(message => { %>
+        <% allMessages.forEach(message => { %>
             <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
-                <% if (message.type === 'success') { %>
-                    <i class="fas fa-check-circle me-2"></i>
-                <% } else if (message.type === 'error' || message.type === 'danger') { %>
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                <% } else if (message.type === 'warning') { %>
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                <% } else if (message.type === 'info') { %>
-                    <i class="fas fa-info-circle me-2"></i>
-                <% } %>
-                
                 <%= message.text %>
-                
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <% }); %>
     </div>
 <% } %>
-
-<style>
-.flash-messages-container {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    z-index: 9999;
-    min-width: 300px;
-    max-width: 500px;
-}
-
-.flash-messages-container .alert {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: none;
-    border-left: 4px solid;
-}
-
-.flash-messages-container .alert-success {
-    border-left-color: #198754;
-}
-
-.flash-messages-container .alert-danger {
-    border-left-color: #dc3545;
-}
-
-.flash-messages-container .alert-warning {
-    border-left-color: #ffc107;
-}
-
-.flash-messages-container .alert-info {
-    border-left-color: #0dcaf0;
-}
-</style>
-
-<script>
-// Auto-dismiss alerts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    });
-});
-</script>

@@ -58,11 +58,11 @@
     <% } %>
 
     <!-- Header -->
-    <%- include('../partials/header', {
-        unreadNotifications: typeof unreadNotifications !== 'undefined' ? unreadNotifications : 0,
-        user: typeof user !== 'undefined' ? user : null
-    }) %>
-
+<%- include('../partials/header', {
+unreadNotifications: typeof unreadNotifications !== 'undefined' ? unreadNotifications : 0,
+user: typeof user !== 'undefined' ? user : null,
+currentUser: typeof user !== 'undefined' ? user : null
+}) %>
     <!-- Main Content -->
     <main class="main-content">
         <%- body %>

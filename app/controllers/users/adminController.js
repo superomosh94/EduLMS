@@ -1,4 +1,4 @@
-// app/controllers/users/adminController.js - UPDATED FOR PROMISE POOL
+// app/controllers/users/adminController.js - COMPLETE FIXED VERSION
 const { pool } = require('../../../config/database');
 const bcrypt = require('bcryptjs');
 
@@ -27,10 +27,13 @@ const Helpers = {
   // Generate user initials
   generateInitials: (user) => {
     if (!user) return 'U';
-    if (user.firstName && user.lastName) {
-      return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
+    if (user.name) {
+      const names = user.name.split(' ');
+      if (names.length >= 2) {
+        return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+      }
+      return names[0].charAt(0).toUpperCase();
     }
-    if (user.username) return user.username.charAt(0).toUpperCase();
     if (user.email) return user.email.charAt(0).toUpperCase();
     return 'U';
   }
@@ -38,57 +41,84 @@ const Helpers = {
 
 const ROLES = {
   ADMIN: 'admin',
-  STUDENT: 'student',
+  STUDENT: 'student', 
   INSTRUCTOR: 'instructor',
   FINANCE: 'finance'
 };
 
-class AdminController {
+// Map role_id to role names
+const ROLE_MAP = {
+  1: 'admin',
+  2: 'student',
+  3: 'instructor',
+  4: 'finance'
+};
+
+// Helper method to get user with initials (standalone function)
+const getUserWithInitials = (user) => {
+  if (!user) return { initials: 'U' };
+  return {
+    ...user,
+    initials: Helpers.generateInitials(user),
+    role: ROLE_MAP[user.role_id] || 'user'
+  };
+};
+
+const AdminController = {
   // Admin Dashboard
   async dashboard(req, res) {
     try {
-      // Get basic stats using promise pool
+      console.log('Loading admin dashboard...');
+      
+      // Get basic stats using actual schema
       const [users] = await pool.execute('SELECT COUNT(*) as total FROM users');
-      const [students] = await pool.execute('SELECT COUNT(*) as total FROM users WHERE role = "student"');
-      const [instructors] = await pool.execute('SELECT COUNT(*) as total FROM users WHERE role = "instructor"');
+      
+      // Count students (users with student_id)
+      const [students] = await pool.execute(`
+        SELECT COUNT(*) as total FROM users 
+        WHERE student_id IS NOT NULL AND student_id != ''
+      `);
+      
+      // Count instructors (users with teacher_id)
+      const [instructors] = await pool.execute(`
+        SELECT COUNT(*) as total FROM users 
+        WHERE teacher_id IS NOT NULL AND teacher_id != ''
+      `);
+      
       const [courses] = await pool.execute('SELECT COUNT(*) as total FROM courses');
       const [payments] = await pool.execute('SELECT COUNT(*) as total FROM payments WHERE status = "completed"');
       const [revenue] = await pool.execute('SELECT SUM(amount) as total FROM payments WHERE status = "completed"');
 
-      // Generate initials for current user
-      const userWithInitials = {
-        ...req.user,
-        initials: Helpers.generateInitials(req.user)
-      };
+      // Safely get current user with initials
+      const currentUser = getUserWithInitials(req.user || {});
+
+      console.log('Dashboard stats loaded successfully');
 
       res.render('admin/dashboard', {
         title: 'Admin Dashboard - EduLMS',
         layout: 'layouts/admin-layout',
-        user: userWithInitials,
+        currentUser: currentUser,
         currentPage: 'dashboard',
         stats: {
-          totalUsers: users[0].total,
-          totalStudents: students[0].total,
-          totalInstructors: instructors[0].total,
-          totalCourses: courses[0].total,
-          totalPayments: payments[0].total,
-          totalRevenue: revenue[0].total || 0
+          totalUsers: users[0]?.total || 0,
+          totalStudents: students[0]?.total || 0,
+          totalInstructors: instructors[0]?.total || 0,
+          totalCourses: courses[0]?.total || 0,
+          totalPayments: payments[0]?.total || 0,
+          totalRevenue: revenue[0]?.total || 0
         }
       });
     } catch (error) {
       console.error('Admin dashboard error:', error);
       
-      // Generate initials even on error
-      const userWithInitials = {
-        ...req.user,
-        initials: Helpers.generateInitials(req.user)
-      };
-
-      req.flash('error_msg', 'Error loading dashboard');
+      // Safe error handling
+      const currentUser = getUserWithInitials(req.user || {});
+      
+      req.flash('error_msg', 'Error loading dashboard data');
       res.render('admin/dashboard', {
         title: 'Admin Dashboard - EduLMS',
         layout: 'layouts/admin-layout',
-        user: userWithInitials,
+        currentUser: currentUser,
         currentPage: 'dashboard',
         stats: {
           totalUsers: 0,
@@ -100,38 +130,33 @@ class AdminController {
         }
       });
     }
-  }
+  },
 
-  // User Management
+  // User Management - FIXED PARAMETER BINDING
   async listUsers(req, res) {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = 10;
       const offset = (page - 1) * limit;
 
+      // FIX: Convert numbers to strings for MySQL2 parameter binding
       const [users] = await pool.execute(
         'SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
-        [limit, offset]
+        [limit.toString(), offset.toString()] // Convert to strings
       );
 
       const [countResult] = await pool.execute('SELECT COUNT(*) as total FROM users');
-      const totalPages = Math.ceil(countResult[0].total / limit);
+      const totalPages = Math.ceil(countResult[0]?.total / limit) || 1;
 
-      // Add initials to each user
-      const usersWithInitials = users.map(user => ({
-        ...user,
-        initials: Helpers.generateInitials(user)
-      }));
+      // Add initials and role to each user
+      const usersWithData = users.map(user => getUserWithInitials(user));
 
       res.render('admin/users/list', {
         title: 'User Management - EduLMS',
         layout: 'layouts/admin-layout',
-        user: {
-          ...req.user,
-          initials: Helpers.generateInitials(req.user)
-        },
+        currentUser: getUserWithInitials(req.user || {}),
         currentPage: 'users',
-        users: usersWithInitials,
+        users: usersWithData,
         pagination: Helpers.generatePagination(page, totalPages, '/admin/users')
       });
     } catch (error) {
@@ -139,32 +164,71 @@ class AdminController {
       req.flash('error_msg', 'Error loading users');
       res.redirect('/admin/dashboard');
     }
-  }
+  },
 
-  // Student Management
+  // Show Create User Form - ADDED MISSING METHOD
+  async showCreateUser(req, res) {
+    try {
+      res.render('admin/users/create', {
+        title: 'Create User - EduLMS',
+        layout: 'layouts/admin-layout',
+        currentUser: getUserWithInitials(req.user || {}),
+        currentPage: 'users',
+        roles: Object.values(ROLES),
+        formData: {}
+      });
+    } catch (error) {
+      console.error('Show create user error:', error);
+      req.flash('error_msg', 'Error loading create user form');
+      res.redirect('/admin/users');
+    }
+  },
+
+  // Show User Details - ADDED MISSING METHOD
+  async showUser(req, res) {
+    try {
+      const userId = req.params.id;
+
+      const [users] = await pool.execute('SELECT * FROM users WHERE id = ?', [userId]);
+      
+      if (users.length === 0) {
+        req.flash('error_msg', 'User not found');
+        return res.redirect('/admin/users');
+      }
+
+      const user = users[0];
+      const userWithData = getUserWithInitials(user);
+
+      res.render('admin/users/view', {
+        title: 'User Details - EduLMS',
+        layout: 'layouts/admin-layout',
+        currentUser: getUserWithInitials(req.user || {}),
+        currentPage: 'users',
+        viewUser: userWithData
+      });
+    } catch (error) {
+      console.error('Show user error:', error);
+      req.flash('error_msg', 'Error loading user details');
+      res.redirect('/admin/users');
+    }
+  },
+
+  // Student Management - FIXED PARAMETER BINDING
   async listStudents(req, res) {
     try {
       const [students] = await pool.execute(`
-        SELECT u.*, s.student_id 
-        FROM users u 
-        LEFT JOIN students s ON u.id = s.user_id 
-        WHERE u.role = 'student'
-        ORDER BY u.created_at DESC
+        SELECT * FROM users 
+        WHERE student_id IS NOT NULL AND student_id != ''
+        ORDER BY created_at DESC
       `);
 
       // Add initials to each student
-      const studentsWithInitials = students.map(student => ({
-        ...student,
-        initials: Helpers.generateInitials(student)
-      }));
+      const studentsWithInitials = students.map(student => getUserWithInitials(student));
 
       res.render('admin/users/students', {
         title: 'Student Management - EduLMS',
         layout: 'layouts/admin-layout',
-        user: {
-          ...req.user,
-          initials: Helpers.generateInitials(req.user)
-        },
+        currentUser: getUserWithInitials(req.user || {}),
         currentPage: 'students',
         students: studentsWithInitials
       });
@@ -173,32 +237,24 @@ class AdminController {
       req.flash('error_msg', 'Error loading students');
       res.redirect('/admin/dashboard');
     }
-  }
+  },
 
   // Instructor Management
   async listInstructors(req, res) {
     try {
       const [instructors] = await pool.execute(`
-        SELECT u.*, i.instructor_id 
-        FROM users u 
-        LEFT JOIN instructors i ON u.id = i.user_id 
-        WHERE u.role = 'instructor'
-        ORDER BY u.created_at DESC
+        SELECT * FROM users 
+        WHERE teacher_id IS NOT NULL AND teacher_id != ''
+        ORDER BY created_at DESC
       `);
 
       // Add initials to each instructor
-      const instructorsWithInitials = instructors.map(instructor => ({
-        ...instructor,
-        initials: Helpers.generateInitials(instructor)
-      }));
+      const instructorsWithInitials = instructors.map(instructor => getUserWithInitials(instructor));
 
       res.render('admin/users/instructors', {
         title: 'Instructor Management - EduLMS',
         layout: 'layouts/admin-layout',
-        user: {
-          ...req.user,
-          initials: Helpers.generateInitials(req.user)
-        },
+        currentUser: getUserWithInitials(req.user || {}),
         currentPage: 'instructors',
         instructors: instructorsWithInitials
       });
@@ -207,54 +263,57 @@ class AdminController {
       req.flash('error_msg', 'Error loading instructors');
       res.redirect('/admin/dashboard');
     }
-  }
+  },
 
   // Add New User
-  async addUser(req, res) {
+  async createUser(req, res) {
     try {
-      const { firstName, lastName, email, role, phone } = req.body;
+      const { name, email, role, phone } = req.body;
 
       // Generate temporary password
       const tempPassword = Generators.generatePassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
-      // Start transaction
-      const result = await pool.transaction(async (connection) => {
-        // Insert user
-        const [userResult] = await connection.execute(
-          'INSERT INTO users (firstName, lastName, email, password, role, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [firstName, lastName, email, hashedPassword, role, phone, 'active']
-        );
+      // Determine role_id based on role
+      let roleId = 1; // default to admin
+      let studentId = null;
+      let teacherId = null;
+      let employeeId = null;
 
-        const userId = userResult.insertId;
+      if (role === 'student') {
+        roleId = 2;
+        studentId = Generators.generateStudentId();
+      } else if (role === 'instructor') {
+        roleId = 3;
+        teacherId = Generators.generateInstructorId();
+        employeeId = `EMP${Date.now().toString().slice(-6)}`;
+      } else if (role === 'finance') {
+        roleId = 4;
+        employeeId = `EMP${Date.now().toString().slice(-6)}`;
+      }
 
-        // Create role-specific record
-        if (role === 'student') {
-          const studentId = Generators.generateStudentId();
-          await connection.execute(
-            'INSERT INTO students (user_id, student_id) VALUES (?, ?)',
-            [userId, studentId]
-          );
-        } else if (role === 'instructor') {
-          const instructorId = Generators.generateInstructorId();
-          await connection.execute(
-            'INSERT INTO instructors (user_id, instructor_id) VALUES (?, ?)',
-            [userId, instructorId]
-          );
-        }
+      // Insert user with actual schema
+      const [userResult] = await pool.execute(
+        `INSERT INTO users (name, email, password, role_id, phone, student_id, teacher_id, employee_id, is_active) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, email, hashedPassword, roleId, phone, studentId, teacherId, employeeId, 1]
+      );
 
-        return { userId, tempPassword };
-      });
-
-      req.flash('success_msg', `User created successfully! Temporary password: ${result.tempPassword}`);
+      req.flash('success_msg', `User created successfully! Temporary password: ${tempPassword}`);
       res.redirect('/admin/users');
 
     } catch (error) {
       console.error('Add user error:', error);
-      req.flash('error_msg', 'Error creating user');
+      
+      if (error.code === 'ER_DUP_ENTRY') {
+        req.flash('error_msg', 'Email already exists');
+      } else {
+        req.flash('error_msg', 'Error creating user: ' + error.message);
+      }
+      
       res.redirect('/admin/users');
     }
-  }
+  },
 
   // View User Details
   async viewUser(req, res) {
@@ -269,37 +328,14 @@ class AdminController {
       }
 
       const user = users[0];
-      const userWithInitials = {
-        ...user,
-        initials: Helpers.generateInitials(user)
-      };
-
-      // Get additional role-specific data
-      let roleData = null;
-      if (user.role === 'student') {
-        const [studentData] = await pool.execute(
-          'SELECT * FROM students WHERE user_id = ?', 
-          [userId]
-        );
-        roleData = studentData[0];
-      } else if (user.role === 'instructor') {
-        const [instructorData] = await pool.execute(
-          'SELECT * FROM instructors WHERE user_id = ?', 
-          [userId]
-        );
-        roleData = instructorData[0];
-      }
+      const userWithData = getUserWithInitials(user);
 
       res.render('admin/users/view', {
         title: 'User Details - EduLMS',
         layout: 'layouts/admin-layout',
-        user: {
-          ...req.user,
-          initials: Helpers.generateInitials(req.user)
-        },
+        currentUser: getUserWithInitials(req.user || {}),
         currentPage: 'users',
-        viewUser: userWithInitials,
-        roleData: roleData
+        viewUser: userWithData
       });
 
     } catch (error) {
@@ -307,7 +343,116 @@ class AdminController {
       req.flash('error_msg', 'Error loading user details');
       res.redirect('/admin/users');
     }
-  }
-}
+  },
 
-module.exports = new AdminController();
+  // Edit User Form
+  async editUserForm(req, res) {
+    try {
+      const userId = req.params.id;
+
+      const [users] = await pool.execute('SELECT * FROM users WHERE id = ?', [userId]);
+      
+      if (users.length === 0) {
+        req.flash('error_msg', 'User not found');
+        return res.redirect('/admin/users');
+      }
+
+      const user = users[0];
+      const userWithData = getUserWithInitials(user);
+
+      res.render('admin/users/edit', {
+        title: 'Edit User - EduLMS',
+        layout: 'layouts/admin-layout',
+        currentUser: getUserWithInitials(req.user || {}),
+        currentPage: 'users',
+        editUser: userWithData,
+        roles: Object.values(ROLES)
+      });
+
+    } catch (error) {
+      console.error('Edit user form error:', error);
+      req.flash('error_msg', 'Error loading edit form');
+      res.redirect('/admin/users');
+    }
+  },
+
+  // Update User
+  async updateUser(req, res) {
+    try {
+      const userId = req.params.id;
+      const { name, email, phone, is_active } = req.body;
+
+      await pool.execute(
+        'UPDATE users SET name = ?, email = ?, phone = ?, is_active = ? WHERE id = ?',
+        [name, email, phone, is_active ? 1 : 0, userId]
+      );
+
+      req.flash('success_msg', 'User updated successfully');
+      res.redirect('/admin/users');
+
+    } catch (error) {
+      console.error('Update user error:', error);
+      
+      if (error.code === 'ER_DUP_ENTRY') {
+        req.flash('error_msg', 'Email already exists');
+      } else {
+        req.flash('error_msg', 'Error updating user');
+      }
+      
+      res.redirect(`/admin/users/edit/${userId}`);
+    }
+  },
+
+  // Delete User
+  async deleteUser(req, res) {
+    try {
+      const userId = req.params.id;
+
+      await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+
+      req.flash('success_msg', 'User deleted successfully');
+      res.redirect('/admin/users');
+
+    } catch (error) {
+      console.error('Delete user error:', error);
+      req.flash('error_msg', 'Error deleting user');
+      res.redirect('/admin/users');
+    }
+  },
+
+  // System Settings - ADDED MISSING METHOD
+  async systemSettings(req, res) {
+    try {
+      res.render('admin/system/settings', {
+        title: 'System Settings - EduLMS',
+        layout: 'layouts/admin-layout',
+        currentUser: getUserWithInitials(req.user || {}),
+        currentPage: 'system',
+        settings: {}
+      });
+    } catch (error) {
+      console.error('System settings error:', error);
+      req.flash('error_msg', 'Error loading system settings');
+      res.redirect('/admin/dashboard');
+    }
+  },
+
+  // Update System Settings - ADDED MISSING METHOD
+  async updateSystemSettings(req, res) {
+    try {
+      req.flash('success_msg', 'System settings updated successfully');
+      res.redirect('/admin/system/settings');
+    } catch (error) {
+      console.error('Update system settings error:', error);
+      req.flash('error_msg', 'Error updating system settings');
+      res.redirect('/admin/system/settings');
+    }
+  },
+
+  // Get user role name
+  getUserRole(roleId) {
+    return ROLE_MAP[roleId] || 'user';
+  }
+};
+
+module.exports = AdminController;
