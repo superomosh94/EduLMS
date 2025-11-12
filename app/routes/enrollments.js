@@ -1,44 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const { isAuthenticated, canManageCourse } = require('../middleware/auth');
-const { asyncHandler } = require('../middleware/errorHandler');
 const enrollmentController = require('../controllers/academic/enrollmentController');
+const { isAuthenticated, hasAnyRole } = require('../middleware/auth');
 
 // Apply authentication middleware to all routes
 router.use(isAuthenticated);
 
 // Student enrollment management
-router.get('/my-enrollments', enrollmentController.getMyEnrollments);
-router.post('/course/:courseId/enroll', enrollmentController.enrollInCourse);
-router.post('/course/:courseId/drop', enrollmentController.dropCourse);
-router.get('/course/:courseId/status', enrollmentController.getEnrollmentStatus);
+router.get('/my-enrollments', enrollmentController.getStudentEnrollments);
+router.post('/self-enroll', enrollmentController.selfEnroll);
+router.put('/:enrollmentId/drop', enrollmentController.dropEnrollment);
+router.put('/:enrollmentId/status', enrollmentController.updateEnrollmentStatus);
 
 // Instructor enrollment management
-router.get('/course/:courseId', canManageCourse, enrollmentController.getCourseEnrollments);
-router.post('/course/:courseId/enroll-student', canManageCourse, enrollmentController.enrollStudent);
-router.post('/course/:courseId/remove-student', canManageCourse, enrollmentController.removeStudent);
-router.put('/:enrollmentId/status', canManageCourse, enrollmentController.updateEnrollmentStatus);
+router.get('/course/:courseId', 
+  hasAnyRole(['admin', 'instructor']), 
+  enrollmentController.getCourseEnrollments
+);
 
-// Enrollment analytics
-router.get('/stats/course/:courseId', canManageCourse, enrollmentController.getCourseEnrollmentStats);
-router.get('/stats/overview', enrollmentController.getEnrollmentOverview);
+router.post('/enroll-student', 
+  hasAnyRole(['admin', 'instructor']), 
+  enrollmentController.enrollStudent
+);
 
-// Waitlist management
-router.get('/course/:courseId/waitlist', canManageCourse, enrollmentController.getCourseWaitlist);
-router.post('/course/:courseId/waitlist', enrollmentController.joinWaitlist);
-router.post('/course/:courseId/waitlist/:waitlistId/approve', canManageCourse, enrollmentController.approveWaitlist);
+router.post('/bulk-enroll', 
+  hasAnyRole(['admin', 'instructor']), 
+  enrollmentController.bulkEnrollStudents
+);
 
-// Bulk enrollment operations
-router.post('/bulk/enroll', canManageCourse, enrollmentController.bulkEnrollStudents);
-router.post('/bulk/update', canManageCourse, enrollmentController.bulkUpdateEnrollments);
-
-// Enrollment reports
-router.get('/reports/course-enrollment', enrollmentController.getCourseEnrollmentReport);
-router.get('/reports/student-enrollment', enrollmentController.getStudentEnrollmentReport);
-
-// API endpoints
-router.get('/api/my-current', enrollmentController.getMyCurrentEnrollments);
-router.get('/api/course/:courseId/enrollment-count', enrollmentController.getCourseEnrollmentCount);
-router.get('/api/available-courses', enrollmentController.getAvailableCourses);
+// Enrollment statistics
+router.get('/stats', enrollmentController.getEnrollmentStats);
 
 module.exports = router;

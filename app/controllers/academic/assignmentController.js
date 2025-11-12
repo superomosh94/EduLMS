@@ -1,168 +1,82 @@
+const db = require('../../../config/database');
 const Assignment = require('../../models/Assignment');
-const Course = require('../../models/Course');
-const Submission = require('../../models/Submission');
-const { validationResult } = require('express-validator');
-const { fileService } = require('../../services/fileService');
+const { ROLES } = require('../../../config/constants');
 
 const assignmentController = {
-  // Create assignment
-  createAssignment: async (req, res) => {
+  // List all assignments (with pagination and filtering)
+  listAssignments: async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation errors',
-          errors: errors.array()
-        });
-      }
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const courseId = req.query.courseId || '';
+      const status = req.query.status || '';
+      const type = req.query.type || '';
+      const search = req.query.search || '';
 
-      const {
-        courseId,
-        title,
-        description,
-        dueDate,
-        maxPoints,
-        assignmentType,
-        instructions,
-        allowedSubmissions,
-        gradingCriteria,
-        isPublished = false
-      } = req.body;
+      const filters = {};
+      if (courseId) filters.course_id = courseId;
+      if (status) filters.status = status;
+      if (type) filters.type = type;
+      if (search) filters.search = search;
 
-      // Verify course exists and user is instructor
-      const course = await Course.findById(courseId);
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
+      const assignmentsData = await Assignment.getAssignments(filters, page, limit);
 
-      // Check if user is the course instructor
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Only course instructor can create assignments.'
-        });
-      }
-
-      const assignment = new Assignment({
-        course: courseId,
-        title,
-        description,
-        dueDate,
-        maxPoints,
-        assignmentType: assignmentType || 'homework',
-        instructions,
-        allowedSubmissions: allowedSubmissions || 1,
-        gradingCriteria: gradingCriteria || [],
-        isPublished,
-        createdBy: req.user.id
-      });
-
-      // Handle file attachments
-      if (req.files && req.files.length > 0) {
-        assignment.attachments = req.files.map(file => ({
-          fileName: file.originalname,
-          filePath: file.path,
-          fileSize: file.size,
-          mimeType: file.mimetype,
-          uploadedBy: req.user.id
-        }));
-      }
-
-      await assignment.save();
-      await assignment.populate('course', 'courseCode courseName');
-      await assignment.populate('createdBy', 'firstName lastName');
-
-      res.status(201).json({
+      res.json({
         success: true,
-        message: 'Assignment created successfully',
-        data: assignment
+        data: {
+          assignments: assignmentsData.assignments,
+          pagination: {
+            current: page,
+            pages: assignmentsData.totalPages,
+            total: assignmentsData.total
+          }
+        }
       });
     } catch (error) {
-      console.error('Create assignment error:', error);
+      console.error('List assignments error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error loading assignments',
         error: error.message
       });
     }
   },
 
-  // Get assignments for course
+  // Get assignments for a specific course
   getCourseAssignments: async (req, res) => {
     try {
-      const { courseId } = req.params;
-      const { 
-        page = 1, 
-        limit = 10, 
-        assignmentType, 
-        isPublished,
-        includeSubmissions = false 
-      } = req.query;
+      const courseId = req.params.courseId;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
 
-      const filter = { course: courseId };
+      const assignmentsData = await Assignment.getByCourse(courseId, page, limit);
 
-      if (assignmentType) filter.assignmentType = assignmentType;
-      if (isPublished !== undefined) filter.isPublished = isPublished === 'true';
-
-      const assignments = await Assignment.find(filter)
-        .populate('course', 'courseCode courseName')
-        .populate('createdBy', 'firstName lastName')
-        .sort({ dueDate: 1, createdAt: -1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      // If requested, include submission status for current user
-      let assignmentsWithStatus = assignments;
-      if (includeSubmissions === 'true' && req.user.role === 'student') {
-        assignmentsWithStatus = await Promise.all(
-          assignments.map(async (assignment) => {
-            const submission = await Submission.findOne({
-              assignment: assignment._id,
-              student: req.user.id
-            });
-            
-            const assignmentObj = assignment.toObject();
-            assignmentObj.submissionStatus = submission ? submission.status : 'not_submitted';
-            assignmentObj.submittedAt = submission ? submission.submittedAt : null;
-            
-            return assignmentObj;
-          })
-        );
-      }
-
-      const total = await Assignment.countDocuments(filter);
-
-      res.status(200).json({
+      res.json({
         success: true,
         data: {
-          assignments: assignmentsWithStatus,
-          totalPages: Math.ceil(total / limit),
-          currentPage: page,
-          total
+          assignments: assignmentsData.assignments,
+          pagination: {
+            current: page,
+            pages: assignmentsData.totalPages,
+            total: assignmentsData.total
+          }
         }
       });
     } catch (error) {
       console.error('Get course assignments error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error loading course assignments',
         error: error.message
       });
     }
   },
 
-  // Get assignment by ID
-  getAssignment: async (req, res) => {
+  // View single assignment
+  viewAssignment: async (req, res) => {
     try {
-      const { id } = req.params;
-
-      const assignment = await Assignment.findById(id)
-        .populate('course', 'courseCode courseName instructor')
-        .populate('createdBy', 'firstName lastName');
+      const assignmentId = req.params.assignmentId;
+      const assignment = await Assignment.findById(assignmentId);
 
       if (!assignment) {
         return res.status(404).json({
@@ -171,137 +85,254 @@ const assignmentController = {
         });
       }
 
-      // For students, check if they can view (only published assignments)
-      if (req.user.role === 'student' && !assignment.isPublished) {
+      // Check if user has access to this assignment
+      const hasAccess = await Assignment.checkAccess(assignmentId, req.user.id, req.user.role_name);
+
+      if (!hasAccess) {
         return res.status(403).json({
           success: false,
-          message: 'This assignment is not published yet'
+          message: 'You do not have access to this assignment'
         });
       }
 
-      res.status(200).json({
+      res.json({
         success: true,
         data: assignment
       });
     } catch (error) {
-      console.error('Get assignment error:', error);
+      console.error('View assignment error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error loading assignment',
         error: error.message
       });
     }
   },
 
-  // Update assignment
-  updateAssignment: async (req, res) => {
+  // Submit assignment (student only)
+  submitAssignment: async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      const assignmentId = req.params.assignmentId;
+      const studentId = req.user.id;
+      const submissionData = req.body;
+
+      // Check if assignment exists and is active
+      const assignment = await Assignment.findById(assignmentId);
+      if (!assignment || assignment.status !== 'published') {
         return res.status(400).json({
           success: false,
-          message: 'Validation errors',
-          errors: errors.array()
+          message: 'Assignment not available for submission'
         });
       }
 
-      const { id } = req.params;
-      const updateData = req.body;
+      // Check if due date has passed
+      if (new Date(assignment.due_date) < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Assignment submission deadline has passed'
+        });
+      }
 
-      const assignment = await Assignment.findById(id);
-      if (!assignment) {
+      // Check if already submitted
+      const existingSubmission = await db.query(
+        'SELECT id FROM assignment_submissions WHERE assignment_id = ? AND student_id = ?',
+        [assignmentId, studentId]
+      );
+
+      if (existingSubmission.length > 0 && !assignment.allow_multiple_attempts) {
+        return res.status(400).json({
+          success: false,
+          message: 'You have already submitted this assignment'
+        });
+      }
+
+      const submissionId = await Assignment.submit(assignmentId, studentId, submissionData);
+
+      res.json({
+        success: true,
+        message: 'Assignment submitted successfully',
+        data: { submissionId }
+      });
+    } catch (error) {
+      console.error('Submit assignment error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error submitting assignment',
+        error: error.message
+      });
+    }
+  },
+
+  // View submission
+  viewSubmission: async (req, res) => {
+    try {
+      const submissionId = req.params.submissionId;
+      const submission = await Assignment.getSubmission(submissionId);
+
+      if (!submission) {
         return res.status(404).json({
           success: false,
-          message: 'Assignment not found'
+          message: 'Submission not found'
         });
       }
 
-      // Check permissions
-      const course = await Course.findById(assignment.course);
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+      // Check if user has access to view this submission
+      const canView = await Assignment.canViewSubmission(submissionId, req.user.id, req.user.role_name);
+
+      if (!canView) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied. Only course instructor can update assignments.'
+          message: 'You do not have permission to view this submission'
         });
       }
 
-      // Handle file attachments
-      if (req.files && req.files.length > 0) {
-        const newAttachments = req.files.map(file => ({
-          fileName: file.originalname,
-          filePath: file.path,
-          fileSize: file.size,
-          mimeType: file.mimetype,
-          uploadedBy: req.user.id
-        }));
-        
-        updateData.attachments = [...assignment.attachments, ...newAttachments];
+      res.json({
+        success: true,
+        data: submission
+      });
+    } catch (error) {
+      console.error('View submission error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading submission',
+        error: error.message
+      });
+    }
+  },
+
+  // Update submission (student only)
+  updateSubmission: async (req, res) => {
+    try {
+      const submissionId = req.params.submissionId;
+      const studentId = req.user.id;
+      const updateData = req.body;
+
+      // Check if submission belongs to student
+      const submission = await db.query(
+        'SELECT * FROM assignment_submissions WHERE id = ? AND student_id = ?',
+        [submissionId, studentId]
+      );
+
+      if (submission.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only update your own submissions'
+        });
       }
 
-      const updatedAssignment = await Assignment.findByIdAndUpdate(
-        id,
-        { ...updateData, updatedBy: req.user.id },
-        { new: true, runValidators: true }
-      )
-        .populate('course', 'courseCode courseName')
-        .populate('createdBy', 'firstName lastName');
+      // Check if assignment allows updates
+      const assignment = await Assignment.findById(submission[0].assignment_id);
+      if (!assignment.allow_updates) {
+        return res.status(400).json({
+          success: false,
+          message: 'This assignment does not allow submission updates'
+        });
+      }
 
-      res.status(200).json({
+      await Assignment.updateSubmission(submissionId, updateData);
+
+      res.json({
         success: true,
-        message: 'Assignment updated successfully',
-        data: updatedAssignment
+        message: 'Submission updated successfully'
+      });
+    } catch (error) {
+      console.error('Update submission error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error updating submission',
+        error: error.message
+      });
+    }
+  },
+
+  // Delete submission (student only)
+  deleteSubmission: async (req, res) => {
+    try {
+      const submissionId = req.params.submissionId;
+      const studentId = req.user.id;
+
+      // Check if submission belongs to student
+      const submission = await db.query(
+        'SELECT * FROM assignment_submissions WHERE id = ? AND student_id = ?',
+        [submissionId, studentId]
+      );
+
+      if (submission.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only delete your own submissions'
+        });
+      }
+
+      await Assignment.deleteSubmission(submissionId);
+
+      res.json({
+        success: true,
+        message: 'Submission deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete submission error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error deleting submission',
+        error: error.message
+      });
+    }
+  },
+
+  // Create assignment (instructor/admin only)
+  createAssignment: async (req, res) => {
+    try {
+      const instructorId = req.user.id;
+      const assignmentData = req.body;
+
+      const assignmentId = await Assignment.create(assignmentData, instructorId);
+
+      res.json({
+        success: true,
+        message: 'Assignment created successfully',
+        data: { assignmentId }
+      });
+    } catch (error) {
+      console.error('Create assignment error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error creating assignment',
+        error: error.message
+      });
+    }
+  },
+
+  // Update assignment (instructor/admin only)
+  updateAssignment: async (req, res) => {
+    try {
+      const assignmentId = req.params.assignmentId;
+      const updateData = req.body;
+
+      await Assignment.update(assignmentId, updateData);
+
+      res.json({
+        success: true,
+        message: 'Assignment updated successfully'
       });
     } catch (error) {
       console.error('Update assignment error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error updating assignment',
         error: error.message
       });
     }
   },
 
-  // Delete assignment
+  // Delete assignment (instructor/admin only)
   deleteAssignment: async (req, res) => {
     try {
-      const { id } = req.params;
+      const assignmentId = req.params.assignmentId;
 
-      const assignment = await Assignment.findById(id);
-      if (!assignment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Assignment not found'
-        });
-      }
+      await Assignment.delete(assignmentId);
 
-      // Check permissions
-      const course = await Course.findById(assignment.course);
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Only course instructor can delete assignments.'
-        });
-      }
-
-      // Check if there are submissions
-      const submissionCount = await Submission.countDocuments({ assignment: id });
-      if (submissionCount > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot delete assignment with existing submissions'
-        });
-      }
-
-      // Delete attachment files
-      if (assignment.attachments && assignment.attachments.length > 0) {
-        for (const attachment of assignment.attachments) {
-          await fileService.deleteFile(attachment.filePath);
-        }
-      }
-
-      await Assignment.findByIdAndDelete(id);
-
-      res.status(200).json({
+      res.json({
         success: true,
         message: 'Assignment deleted successfully'
       });
@@ -309,155 +340,309 @@ const assignmentController = {
       console.error('Delete assignment error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error deleting assignment',
         error: error.message
       });
     }
   },
 
-  // Publish/unpublish assignment
-  togglePublish: async (req, res) => {
+  // Publish assignment (instructor/admin only)
+  publishAssignment: async (req, res) => {
     try {
-      const { id } = req.params;
-      const { isPublished } = req.body;
+      const assignmentId = req.params.assignmentId;
 
-      const assignment = await Assignment.findById(id);
-      if (!assignment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Assignment not found'
-        });
-      }
+      await Assignment.publish(assignmentId);
 
-      // Check permissions
-      const course = await Course.findById(assignment.course);
-      if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Only course instructor can publish assignments.'
-        });
-      }
-
-      assignment.isPublished = isPublished;
-      assignment.updatedBy = req.user.id;
-      await assignment.save();
-
-      res.status(200).json({
+      res.json({
         success: true,
-        message: `Assignment ${isPublished ? 'published' : 'unpublished'} successfully`,
-        data: assignment
+        message: 'Assignment published successfully'
       });
     } catch (error) {
-      console.error('Toggle publish error:', error);
+      console.error('Publish assignment error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error publishing assignment',
         error: error.message
       });
     }
   },
 
-  // Get assignment statistics
-  getAssignmentStats: async (req, res) => {
+  // Unpublish assignment (instructor/admin only)
+  unpublishAssignment: async (req, res) => {
     try {
-      const { id } = req.params;
+      const assignmentId = req.params.assignmentId;
 
-      const assignment = await Assignment.findById(id);
-      if (!assignment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Assignment not found'
-        });
-      }
+      await Assignment.unpublish(assignmentId);
 
-      const stats = await Submission.aggregate([
-        { $match: { assignment: assignment._id } },
-        {
-          $group: {
-            _id: '$status',
-            count: { $sum: 1 },
-            averageScore: { $avg: '$points' }
-          }
-        }
-      ]);
-
-      const gradeDistribution = await Submission.aggregate([
-        { $match: { assignment: assignment._id, points: { $ne: null } } },
-        {
-          $bucket: {
-            groupBy: '$points',
-            boundaries: [0, 50, 60, 70, 80, 90, 101],
-            default: 'Other',
-            output: {
-              count: { $sum: 1 },
-              students: { $push: '$student' }
-            }
-          }
-        }
-      ]);
-
-      const totalEnrollments = await require('../../models/Enrollment').countDocuments({
-        course: assignment.course,
-        status: 'active'
+      res.json({
+        success: true,
+        message: 'Assignment unpublished successfully'
       });
+    } catch (error) {
+      console.error('Unpublish assignment error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error unpublishing assignment',
+        error: error.message
+      });
+    }
+  },
 
-      res.status(200).json({
+  // Get submissions for an assignment (instructor/admin only)
+  getSubmissions: async (req, res) => {
+    try {
+      const assignmentId = req.params.assignmentId;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.page) || 20;
+      const status = req.query.status || '';
+
+      const submissionsData = await Assignment.getSubmissions(assignmentId, page, limit, status);
+
+      res.json({
         success: true,
         data: {
-          assignment: assignment.title,
-          totalEnrollments,
-          submissionStats: stats,
-          gradeDistribution,
-          dueDate: assignment.dueDate,
-          maxPoints: assignment.maxPoints
+          submissions: submissionsData.submissions,
+          pagination: {
+            current: page,
+            pages: submissionsData.totalPages,
+            total: submissionsData.total
+          }
         }
       });
     } catch (error) {
-      console.error('Get assignment stats error:', error);
+      console.error('Get submissions error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error loading submissions',
         error: error.message
       });
     }
   },
 
-  // Remove assignment attachment
-  removeAttachment: async (req, res) => {
+  // Grade submission (instructor/admin only)
+  gradeSubmission: async (req, res) => {
     try {
-      const { id, attachmentId } = req.params;
+      const submissionId = req.params.submissionId;
+      const gradeData = req.body;
 
-      const assignment = await Assignment.findById(id);
-      if (!assignment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Assignment not found'
-        });
-      }
+      await Assignment.gradeSubmission(submissionId, gradeData);
 
-      const attachment = assignment.attachments.id(attachmentId);
-      if (!attachment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Attachment not found'
-        });
-      }
-
-      // Delete file from storage
-      await fileService.deleteFile(attachment.filePath);
-
-      assignment.attachments.pull(attachmentId);
-      await assignment.save();
-
-      res.status(200).json({
+      res.json({
         success: true,
-        message: 'Attachment removed successfully'
+        message: 'Submission graded successfully'
       });
     } catch (error) {
-      console.error('Remove attachment error:', error);
+      console.error('Grade submission error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error grading submission',
+        error: error.message
+      });
+    }
+  },
+
+  // Download assignment files (instructor/admin only)
+  downloadAssignmentFiles: async (req, res) => {
+    try {
+      const assignmentId = req.params.assignmentId;
+      const files = await Assignment.getFiles(assignmentId);
+
+      res.json({
+        success: true,
+        data: files
+      });
+    } catch (error) {
+      console.error('Download assignment files error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error downloading assignment files',
+        error: error.message
+      });
+    }
+  },
+
+  // Download submission file
+  downloadSubmissionFile: async (req, res) => {
+    try {
+      const submissionId = req.params.submissionId;
+      const file = await Assignment.getSubmissionFile(submissionId);
+
+      if (!file) {
+        return res.status(404).json({
+          success: false,
+          message: 'File not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: file
+      });
+    } catch (error) {
+      console.error('Download submission file error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error downloading submission file',
+        error: error.message
+      });
+    }
+  },
+
+  // Get assignment analytics (instructor/admin only)
+  getAssignmentAnalytics: async (req, res) => {
+    try {
+      const assignmentId = req.params.assignmentId;
+      const analytics = await Assignment.getAnalytics(assignmentId);
+
+      res.json({
+        success: true,
+        data: analytics
+      });
+    } catch (error) {
+      console.error('Get assignment analytics error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading assignment analytics',
+        error: error.message
+      });
+    }
+  },
+  // Add these methods to your submissionController if needed:
+
+// Get student's own submissions
+getMySubmissions: async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { page = 1, limit = 10, status } = req.query;
+    
+    const filter = { student: studentId };
+    if (status) filter.status = status;
+
+    const submissions = await Submission.find(filter)
+      .populate('assignment', 'title course dueDate')
+      .populate({
+        path: 'assignment',
+        populate: { path: 'course', select: 'name code' }
+      })
+      .sort({ submittedAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Submission.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        submissions,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Get my submissions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading submissions',
+      error: error.message
+    });
+  }
+},
+
+// Grade submission (instructor only)
+gradeSubmission: async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const { points, feedback, gradedBy } = req.body;
+
+    const submission = await Submission.findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: 'Submission not found'
+      });
+    }
+
+    submission.points = points;
+    submission.feedback = feedback;
+    submission.gradedBy = gradedBy || req.user.id;
+    submission.gradedAt = new Date();
+    submission.status = 'graded';
+
+    await submission.save();
+
+    res.json({
+      success: true,
+      message: 'Submission graded successfully',
+      data: submission
+    });
+  } catch (error) {
+    console.error('Grade submission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error grading submission',
+      error: error.message
+    });
+  }
+},
+
+// Get course submissions (instructor only)
+getCourseSubmissions: async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
+    // Get all assignments for the course
+    const assignments = await Assignment.find({ course: courseId });
+    const assignmentIds = assignments.map(a => a._id);
+
+    const submissions = await Submission.find({ 
+      assignment: { $in: assignmentIds } 
+    })
+      .populate('assignment', 'title dueDate')
+      .populate('student', 'firstName lastName studentId')
+      .sort({ submittedAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Submission.countDocuments({ 
+      assignment: { $in: assignmentIds } 
+    });
+
+    res.json({
+      success: true,
+      data: {
+        submissions,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Get course submissions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading course submissions',
+      error: error.message
+    });
+  }
+},
+
+  // Get assignment statistics (instructor/admin only)
+  getAssignmentStatistics: async (req, res) => {
+    try {
+      const assignmentId = req.params.assignmentId;
+      const statistics = await Assignment.getStatistics(assignmentId);
+
+      res.json({
+        success: true,
+        data: statistics
+      });
+    } catch (error) {
+      console.error('Get assignment statistics error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading assignment statistics',
         error: error.message
       });
     }

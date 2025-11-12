@@ -1,6 +1,6 @@
 const Student = require('../../models/Student');
 const Course = require('../../models/Course');
-const { Helpers, Formatters } = require('../../../utils');
+const { Helpers, Formatters } = require('../../utils/');
 const db = require('../../../config/database');
 
 class StudentController {

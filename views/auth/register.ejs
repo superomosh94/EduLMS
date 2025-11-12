@@ -1,8 +1,3 @@
-<%- include('../layouts/layout', { 
-    title: 'Register - EduLMS',
-    pageStyles: ['/css/auth.css']
-}) %>
-
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header text-center mb-4">
@@ -11,100 +6,53 @@
             <p class="auth-subtitle">Join EduLMS today</p>
         </div>
         
+        <!-- Flash Messages -->
+        <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= error_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
         <form action="/auth/register" method="POST" class="auth-form" id="registerForm">
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="firstName" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="firstName" name="firstName" value="<%= oldInput.firstName || '' %>" required>
-                        <% if (errors && errors.firstName) { %>
-                            <div class="invalid-feedback d-block"><%= errors.firstName.msg %></div>
-                        <% } %>
+                        <label for="first_name" class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                               value="<%= typeof oldInput !== 'undefined' && oldInput.first_name ? oldInput.first_name : '' %>" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="lastName" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="lastName" name="lastName" value="<%= oldInput.lastName || '' %>" required>
-                        <% if (errors && errors.lastName) { %>
-                            <div class="invalid-feedback d-block"><%= errors.lastName.msg %></div>
-                        <% } %>
+                        <label for="last_name" class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                               value="<%= typeof oldInput !== 'undefined' && oldInput.last_name ? oldInput.last_name : '' %>" required>
                     </div>
                 </div>
             </div>
             
             <div class="mb-3">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" name="email" value="<%= oldInput.email || '' %>" required>
-                <% if (errors && errors.email) { %>
-                    <div class="invalid-feedback d-block"><%= errors.email.msg %></div>
-                <% } %>
+                <label for="email" class="form-label">Email Address *</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="<%= typeof oldInput !== 'undefined' && oldInput.email ? oldInput.email : '' %>" required>
             </div>
             
             <div class="mb-3">
                 <label for="phone" class="form-label">Phone Number</label>
-                <input type="tel" class="form-control" id="phone" name="phone" value="<%= oldInput.phone || '' %>">
-                <% if (errors && errors.phone) { %>
-                    <div class="invalid-feedback d-block"><%= errors.phone.msg %></div>
-                <% } %>
+                <input type="tel" class="form-control" id="phone" name="phone" 
+                       value="<%= typeof oldInput !== 'undefined' && oldInput.phone ? oldInput.phone : '' %>">
             </div>
-            
+
             <div class="mb-3">
-                <label for="role" class="form-label">I am a</label>
-                <select class="form-select" id="role" name="role" required>
-                    <option value="">Select Role</option>
-                    <option value="student" <%= (oldInput.role === 'student') ? 'selected' : '' %>>Student</option>
-                    <option value="instructor" <%= (oldInput.role === 'instructor') ? 'selected' : '' %>>Instructor</option>
-                </select>
-                <% if (errors && errors.role) { %>
-                    <div class="invalid-feedback d-block"><%= errors.role.msg %></div>
-                <% } %>
-            </div>
-            
-            <!-- Student-specific fields -->
-            <div id="studentFields" style="display: none;">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="studentId" class="form-label">Student ID</label>
-                            <input type="text" class="form-control" id="studentId" name="studentId" value="<%= oldInput.studentId || '' %>">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="program" class="form-label">Program</label>
-                            <select class="form-select" id="program" name="program">
-                                <option value="">Select Program</option>
-                                <option value="computer-science">Computer Science</option>
-                                <option value="business">Business Administration</option>
-                                <option value="engineering">Engineering</option>
-                                <option value="arts">Arts & Sciences</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Instructor-specific fields -->
-            <div id="instructorFields" style="display: none;">
-                <div class="mb-3">
-                    <label for="department" class="form-label">Department</label>
-                    <select class="form-select" id="department" name="department">
-                        <option value="">Select Department</option>
-                        <option value="computer-science">Computer Science</option>
-                        <option value="mathematics">Mathematics</option>
-                        <option value="physics">Physics</option>
-                        <option value="business">Business</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="qualifications" class="form-label">Qualifications</label>
-                    <textarea class="form-control" id="qualifications" name="qualifications" rows="3"><%= oldInput.qualifications || '' %></textarea>
-                </div>
-            </div>
-            
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label">Password *</label>
                 <div class="password-input-group">
                     <input type="password" class="form-control" id="password" name="password" required>
                     <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password">
@@ -112,24 +60,18 @@
                     </button>
                 </div>
                 <div class="form-text">
-                    Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.
+                    Password must be at least 8 characters long
                 </div>
-                <% if (errors && errors.password) { %>
-                    <div class="invalid-feedback d-block"><%= errors.password.msg %></div>
-                <% } %>
             </div>
             
             <div class="mb-3">
-                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <label for="confirmPassword" class="form-label">Confirm Password *</label>
                 <div class="password-input-group">
                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
                     <button type="button" class="btn btn-outline-secondary toggle-password" data-target="confirmPassword">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                <% if (errors && errors.confirmPassword) { %>
-                    <div class="invalid-feedback d-block"><%= errors.confirmPassword.msg %></div>
-                <% } %>
             </div>
             
             <div class="mb-3 form-check">
@@ -137,9 +79,6 @@
                 <label class="form-check-label" for="terms">
                     I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
                 </label>
-                <% if (errors && errors.terms) { %>
-                    <div class="invalid-feedback d-block"><%= errors.terms.msg %></div>
-                <% } %>
             </div>
             
             <button type="submit" class="btn btn-primary w-100 mb-3">
@@ -153,64 +92,124 @@
     </div>
 </div>
 
+<style>
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+.auth-logo {
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+.auth-title {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+    color: #666;
+    margin-bottom: 0;
+}
+
+.password-input-group {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 1.5rem;
+        margin: 10px;
+    }
+}
+</style>
+
 <script>
-// Toggle role-specific fields
-document.getElementById('role').addEventListener('change', function() {
-    const role = this.value;
-    document.getElementById('studentFields').style.display = 'none';
-    document.getElementById('instructorFields').style.display = 'none';
-    
-    if (role === 'student') {
-        document.getElementById('studentFields').style.display = 'block';
-    } else if (role === 'instructor') {
-        document.getElementById('instructorFields').style.display = 'block';
-    }
-});
-
-// Trigger change event on page load to show/hide fields based on existing selection
 document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('role');
-    if (roleSelect.value) {
-        roleSelect.dispatchEvent(new Event('change'));
-    }
-});
+    // Password validation
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+            
+            // Basic password strength validation
+            if (password.length < 8) {
+                e.preventDefault();
+                alert('Password must be at least 8 characters long.');
+                return false;
+            }
 
-// Password validation
-document.getElementById('registerForm').addEventListener('submit', function(e) {
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    if (password !== confirmPassword) {
-        e.preventDefault();
-        alert('Passwords do not match!');
-        return false;
-    }
-    
-    // Basic password strength validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-        e.preventDefault();
-        alert('Password must be at least 8 characters long and contain uppercase, lowercase letters and numbers.');
-        return false;
-    }
-});
+            // Validate required fields
+            const firstName = document.getElementById('first_name').value;
+            const lastName = document.getElementById('last_name').value;
+            const email = document.getElementById('email').value;
 
-// Toggle password visibility (reuse from login)
-document.querySelectorAll('.toggle-password').forEach(button => {
-    button.addEventListener('click', function() {
-        const targetId = this.dataset.target;
-        const passwordInput = document.getElementById(targetId);
-        const icon = this.querySelector('i');
-        
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
+            if (!firstName || !lastName || !email) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+        });
+    }
+
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const passwordInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (passwordInput && icon) {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        });
     });
 });
 </script>

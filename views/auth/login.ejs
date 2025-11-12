@@ -1,8 +1,3 @@
-<%- include('../layouts/layout', { 
-    title: 'Login - EduLMS',
-    pageStyles: ['/css/auth.css']
-}) %>
-
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header text-center mb-4">
@@ -11,13 +6,26 @@
             <p class="auth-subtitle">Sign in to your account</p>
         </div>
         
+        <!-- Flash Messages -->
+        <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= error_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
         <form action="/auth/login" method="POST" class="auth-form">
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" name="email" value="<%= oldInput.email || '' %>" required>
-                <% if (errors && errors.email) { %>
-                    <div class="invalid-feedback d-block"><%= errors.email.msg %></div>
-                <% } %>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="<%= typeof oldInput !== 'undefined' && oldInput.email ? oldInput.email : '' %>" required>
             </div>
             
             <div class="mb-3">
@@ -28,9 +36,6 @@
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                <% if (errors && errors.password) { %>
-                    <div class="invalid-feedback d-block"><%= errors.password.msg %></div>
-                <% } %>
             </div>
             
             <div class="mb-3 form-check">
@@ -58,13 +63,13 @@
                     <h6 class="card-title">Demo Accounts</h6>
                     <div class="demo-account-list">
                         <div class="demo-account">
-                            <strong>Admin:</strong> admin@edulms.edu / password
+                            <strong>Admin:</strong> admin@edulms.com / admin123
                         </div>
                         <div class="demo-account">
-                            <strong>Student:</strong> student@edulms.edu / password
+                            <strong>Student:</strong> student@edulms.com / student123
                         </div>
                         <div class="demo-account">
-                            <strong>Instructor:</strong> instructor@edulms.edu / password
+                            <strong>Instructor:</strong> instructor@edulms.com / instructor123
                         </div>
                     </div>
                 </div>
@@ -118,6 +123,12 @@
     height: 100%;
     border: none;
     background: transparent;
+    border: none;
+    padding: 0.375rem 0.75rem;
+}
+
+.toggle-password:hover {
+    background-color: #f8f9fa;
 }
 
 .demo-accounts {
@@ -127,30 +138,82 @@
 .demo-account {
     padding: 0.25rem 0;
     border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
 }
 
 .demo-account:last-child {
     border-bottom: none;
 }
+
+.card-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 1.5rem;
+        margin: 10px;
+    }
+    
+    .demo-accounts {
+        font-size: 0.8rem;
+    }
+}
 </style>
 
 <script>
-// Toggle password visibility
-document.querySelectorAll('.toggle-password').forEach(button => {
-    button.addEventListener('click', function() {
-        const targetId = this.dataset.target;
-        const passwordInput = document.getElementById(targetId);
-        const icon = this.querySelector('i');
-        
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const passwordInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (passwordInput && icon) {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+
+    // Quick login for demo accounts
+    const demoAccounts = {
+        'admin@edulms.com': 'admin123',
+        'student@edulms.com': 'student123', 
+        'instructor@edulms.com': 'instructor123'
+    };
+
+    // Add click handlers to demo accounts for quick login
+    document.querySelectorAll('.demo-account').forEach(account => {
+        account.style.cursor = 'pointer';
+        account.addEventListener('click', function() {
+            const text = this.textContent;
+            const email = text.split(' ')[1]; // Get the email part
+            
+            if (demoAccounts[email]) {
+                document.getElementById('email').value = email;
+                document.getElementById('password').value = demoAccounts[email];
+                
+                // Show confirmation
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span style="color: green;">✓ Click "Sign In" to login</span>';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 3000);
+            }
+        });
     });
 });
 </script>

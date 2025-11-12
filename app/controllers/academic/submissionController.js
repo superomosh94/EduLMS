@@ -200,20 +200,10 @@ const submissionController = {
   // Get student's submission
   getStudentSubmission: async (req, res) => {
     try {
-      const { assignmentId } = req.params;
+      const { submissionId } = req.params;
       const studentId = req.user.role === 'student' ? req.user.id : req.query.studentId;
 
-      if (!studentId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Student ID is required'
-        });
-      }
-
-      const submission = await Submission.findOne({
-        assignment: assignmentId,
-        student: studentId
-      })
+      const submission = await Submission.findById(submissionId)
         .populate('assignment', 'title maxPoints dueDate allowedSubmissions')
         .populate('student', 'firstName lastName studentId')
         .populate('gradedBy', 'firstName lastName');
@@ -426,10 +416,11 @@ const submissionController = {
   getSubmissionHistory: async (req, res) => {
     try {
       const { assignmentId, studentId } = req.params;
+      const targetStudentId = studentId || req.user.id;
 
       const submissions = await Submission.find({
         assignment: assignmentId,
-        student: studentId || req.user.id
+        student: targetStudentId
       })
         .populate('assignment', 'title maxPoints')
         .populate('gradedBy', 'firstName lastName')
@@ -444,6 +435,125 @@ const submissionController = {
       res.status(500).json({
         success: false,
         message: 'Internal server error',
+        error: error.message
+      });
+    }
+  },
+
+  // Get student's own submissions
+  getMySubmissions: async (req, res) => {
+    try {
+      const studentId = req.user.id;
+      const { page = 1, limit = 10, status } = req.query;
+      
+      const filter = { student: studentId };
+      if (status) filter.status = status;
+
+      const submissions = await Submission.find(filter)
+        .populate('assignment', 'title course dueDate')
+        .populate({
+          path: 'assignment',
+          populate: { path: 'course', select: 'name code' }
+        })
+        .sort({ submittedAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+
+      const total = await Submission.countDocuments(filter);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          submissions,
+          totalPages: Math.ceil(total / limit),
+          currentPage: page,
+          total
+        }
+      });
+    } catch (error) {
+      console.error('Get my submissions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading submissions',
+        error: error.message
+      });
+    }
+  },
+
+  // Grade submission (instructor only)
+  gradeSubmission: async (req, res) => {
+    try {
+      const { submissionId } = req.params;
+      const { points, feedback, gradedBy } = req.body;
+
+      const submission = await Submission.findById(submissionId);
+      if (!submission) {
+        return res.status(404).json({
+          success: false,
+          message: 'Submission not found'
+        });
+      }
+
+      submission.points = points;
+      submission.feedback = feedback;
+      submission.gradedBy = gradedBy || req.user.id;
+      submission.gradedAt = new Date();
+      submission.status = 'graded';
+
+      await submission.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Submission graded successfully',
+        data: submission
+      });
+    } catch (error) {
+      console.error('Grade submission error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error grading submission',
+        error: error.message
+      });
+    }
+  },
+
+  // Get course submissions (instructor only)
+  getCourseSubmissions: async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+
+      // Get all assignments for the course
+      const assignments = await Assignment.find({ course: courseId });
+      const assignmentIds = assignments.map(a => a._id);
+
+      const submissions = await Submission.find({ 
+        assignment: { $in: assignmentIds } 
+      })
+        .populate('assignment', 'title dueDate')
+        .populate('student', 'firstName lastName studentId')
+        .sort({ submittedAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+
+      const total = await Submission.countDocuments({ 
+        assignment: { $in: assignmentIds } 
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          submissions,
+          totalPages: Math.ceil(total / limit),
+          currentPage: page,
+          total
+        }
+      });
+    } catch (error) {
+      console.error('Get course submissions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading course submissions',
         error: error.message
       });
     }

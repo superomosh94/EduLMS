@@ -72,16 +72,77 @@ try {
     };
 }
 
-// Safe import for validators
+// Safe import for validators - handle arrays properly
 let validateRegistration, validateLogin;
 try {
     const validators = require('../validators/userValidators');
-    validateRegistration = validators.validateRegistration || ((req, res, next) => next());
-    validateLogin = validators.validateLogin || ((req, res, next) => next());
+    
+    // Check if validators are arrays
+    if (Array.isArray(validators.validateRegistration)) {
+        validateRegistration = validators.validateRegistration;
+        console.log('✅ Registration validators loaded as array');
+    } else {
+        throw new Error('validateRegistration is not an array');
+    }
+    
+    if (Array.isArray(validators.validateLogin)) {
+        validateLogin = validators.validateLogin;
+        console.log('✅ Login validators loaded as array');
+    } else {
+        throw new Error('validateLogin is not an array');
+    }
+    
 } catch (error) {
     console.error('❌ Error loading validators:', error.message);
-    validateRegistration = (req, res, next) => next();
-    validateLogin = (req, res, next) => next();
+    
+    // SIMPLIFIED Fallback validators for basic registration
+    validateRegistration = [
+        (req, res, next) => {
+            console.log('⚠️  Using simplified registration validation');
+            const { first_name, last_name, email, password, confirm_password } = req.body;
+            const errors = [];
+            
+            if (!first_name?.trim()) errors.push('First name is required');
+            if (!last_name?.trim()) errors.push('Last name is required');
+            if (!email?.trim()) errors.push('Email is required');
+            if (!password) errors.push('Password is required');
+            if (!confirm_password) errors.push('Confirm password is required');
+            
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                errors.push('Please provide a valid email address');
+            }
+            
+            if (password && password.length < 8) {
+                errors.push('Password must be at least 8 characters long');
+            }
+            
+            if (password && confirm_password && password !== confirm_password) {
+                errors.push('Passwords do not match');
+            }
+            
+            if (errors.length > 0) {
+                req.flash('error_msg', errors[0]);
+                req.flash('oldInput', req.body);
+                return res.redirect('back');
+            }
+            
+            next();
+        }
+    ];
+    
+    validateLogin = [
+        (req, res, next) => {
+            console.log('⚠️  Using fallback login validation');
+            const { email, password } = req.body;
+            
+            if (!email?.trim() || !password) {
+                req.flash('error_msg', 'Email and password are required');
+                return res.redirect('back');
+            }
+            
+            next();
+        }
+    ];
 }
 
 // Helper function to safely handle route callbacks
@@ -108,6 +169,18 @@ const safeHandler = (handler, routeName) => {
     };
 };
 
+// Helper to safely apply validator arrays
+const applyValidators = (validatorsArray, validatorName) => {
+    if (!Array.isArray(validatorsArray)) {
+        console.error(`❌ ${validatorName} is not an array, using fallback`);
+        return [safeHandler((req, res, next) => next(), `${validatorName}_fallback`)];
+    }
+    
+    return validatorsArray.map((validator, index) => 
+        safeHandler(validator, `${validatorName}[${index}]`)
+    );
+};
+
 // ==================== AUTH ROUTES ====================
 
 // GET /auth/login
@@ -119,6 +192,7 @@ router.get('/login',
             error: req.flash('error'),
             error_msg: req.flash('error_msg'),
             success_msg: req.flash('success_msg'),
+            oldInput: req.flash('oldInput')[0] || {},
             layout: 'layouts/layout'
         });
     }
@@ -133,20 +207,21 @@ router.get('/register',
             error: req.flash('error'),
             error_msg: req.flash('error_msg'),
             success_msg: req.flash('success_msg'),
+            oldInput: req.flash('oldInput')[0] || {},
             layout: 'layouts/layout'
         });
     }
 );
 
-// POST /auth/register
+// POST /auth/register - SIMPLIFIED: No role selection needed
 router.post('/register', 
-    safeHandler(validateRegistration, 'validateRegistration'),
+    ...applyValidators(validateRegistration, 'validateRegistration'),
     safeHandler(authController.register, 'authController.register')
 );
 
 // POST /auth/login
 router.post('/login', 
-    safeHandler(validateLogin, 'validateLogin'),
+    ...applyValidators(validateLogin, 'validateLogin'),
     safeHandler(authController.login, 'authController.login')
 );
 
@@ -216,6 +291,17 @@ router.get('/verify-email',
     }
 );
 
+// ==================== TEST ROUTES ====================
+
+// GET /auth/test - Quick test route
+router.get('/test', (req, res) => {
+    res.json({
+        message: 'Auth routes are working',
+        user: req.user || 'Not logged in',
+        session: req.sessionID ? 'Session exists' : 'No session'
+    });
+});
+
 // ==================== HEALTH CHECK ROUTE ====================
 
 // GET /auth/health - For debugging purposes
@@ -239,8 +325,12 @@ router.get('/health', (req, res) => {
             ensureGuest: typeof ensureGuest
         },
         validators: {
-            validateRegistration: typeof validateRegistration,
-            validateLogin: typeof validateLogin
+            validateRegistration: Array.isArray(validateRegistration) ? `array[${validateRegistration.length}]` : typeof validateRegistration,
+            validateLogin: Array.isArray(validateLogin) ? `array[${validateLogin.length}]` : typeof validateLogin
+        },
+        session: {
+            id: req.sessionID,
+            user: req.user ? 'Logged in' : 'Not logged in'
         }
     });
 });

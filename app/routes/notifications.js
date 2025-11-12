@@ -1,44 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { isAuthenticated } = require('../middleware/auth');
-const { asyncHandler } = require('../middleware/errorHandler');
 const notificationController = require('../controllers/system/notificationController');
+const { isAuthenticated, hasAnyRole } = require('../middleware/auth');
 
 // Apply authentication middleware to all routes
 router.use(isAuthenticated);
 
-// Notification management
-router.get('/', notificationController.getNotifications);
+// User notification management
+router.get('/', notificationController.getUserNotifications);
 router.get('/unread', notificationController.getUnreadNotifications);
-router.get('/:notificationId', notificationController.getNotification);
-router.post('/:notificationId/mark-read', notificationController.markAsRead);
+router.get('/:id', notificationController.getNotification);
+router.post('/:id/mark-read', notificationController.markAsRead);
 router.post('/mark-all-read', notificationController.markAllAsRead);
-router.delete('/:notificationId', notificationController.deleteNotification);
-
-// Notification preferences
-router.get('/preferences', notificationController.getPreferences);
-router.post('/preferences', notificationController.updatePreferences);
+router.delete('/:id', notificationController.deleteNotification);
 
 // Notification statistics
 router.get('/stats', notificationController.getNotificationStats);
 
-// API endpoints for real-time notifications
+// API endpoints
 router.get('/api/recent', notificationController.getRecentNotifications);
 router.get('/api/unread-count', notificationController.getUnreadCount);
-router.post('/api/register-device', notificationController.registerDevice);
 
 // Admin notification management
-router.get('/admin/templates', notificationController.getNotificationTemplates);
-router.post('/admin/templates', notificationController.createNotificationTemplate);
-router.put('/admin/templates/:templateId', notificationController.updateNotificationTemplate);
-router.delete('/admin/templates/:templateId', notificationController.deleteNotificationTemplate);
+router.post('/create', 
+  hasAnyRole(['admin']), 
+  notificationController.createNotification
+);
 
-// Bulk notification sending
-router.get('/admin/send-notification', notificationController.showSendNotification);
-router.post('/admin/send-notification', notificationController.sendBulkNotification);
-
-// Notification analytics
-router.get('/admin/analytics', notificationController.getNotificationAnalytics);
-router.get('/admin/delivery-stats', notificationController.getDeliveryStatistics);
+router.put('/:id', 
+  hasAnyRole(['admin']), 
+  notificationController.updateNotification
+);
 
 module.exports = router;

@@ -7,6 +7,8 @@ const { validateCourseCreation, validateCourseUpdate, validateCourseId } = requi
 const { validateAssignmentCreation, validateAssignmentUpdate, validateAssignmentId } = require('../validators/assignmentValidators');
 
 // Apply instructor middleware to all routes
+
+
 router.use(isAuthenticated);
 router.use(isInstructor);
 

@@ -15,7 +15,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const app = express();
 
 // Import database configuration
-const db = require('./config/database');
+const { pool, checkDatabaseHealth, gracefulShutdown } = require('./config/database');
 
 // Session store configuration
 const sessionStore = new MySQLStore({
@@ -29,7 +29,7 @@ const sessionStore = new MySQLStore({
       data: 'data'
     }
   }
-}, db);
+}, pool);
 
 // Security middleware
 app.use(helmet({
@@ -164,15 +164,42 @@ app.use((req, res, next) => {
   next();
 });
 
+// Database health check endpoint (optional)
+app.get('/health', async (req, res) => {
+  try {
+    const health = await checkDatabaseHealth();
+    res.json({
+      status: 'OK',
+      database: health.healthy ? 'Connected' : 'Disconnected',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'Service Unavailable',
+      database: 'Disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Database connection test
-db.getConnection((err, connection) => {
-  if (err) {
+const testDatabaseConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ Connected to database as id ' + connection.threadId);
+    connection.release();
+    
+    // Perform initial health check
+    const health = await checkDatabaseHealth();
+    console.log('📊 Database health:', health.healthy ? 'Healthy' : 'Unhealthy');
+    
+  } catch (err) {
     console.error('❌ Database connection failed: ' + err.stack);
     process.exit(1);
   }
-  console.log('✅ Connected to database as id ' + connection.threadId);
-  connection.release();
-});
+};
 
 // Import middleware with safe fallbacks
 let ensureAuthenticated, requireRole, errorHandler;
@@ -265,11 +292,6 @@ app.use('/payments', ensureAuthenticated, safeRequireRoute('./app/routes/payment
 app.use('/notifications', ensureAuthenticated, safeRequireRoute('./app/routes/notifications', 'Notifications'));
 app.use('/system', ensureAuthenticated, requireRole(['admin']), safeRequireRoute('./app/routes/system', 'System'));
 
-// API routes (if needed for mobile app or external integrations)
-app.use('/api/v1/auth', safeRequireRoute('./app/routes/api/auth', 'API Auth'));
-app.use('/api/v1/students', ensureAuthenticated, safeRequireRoute('./app/routes/api/students', 'API Students'));
-app.use('/api/v1/courses', ensureAuthenticated, safeRequireRoute('./app/routes/api/courses', 'API Courses'));
-
 // Error handling middleware
 app.use(errorHandler);
 
@@ -281,35 +303,38 @@ app.use((req, res) => {
   });
 });
 
-// Graceful shutdown handling
+// Graceful shutdown handling - Use the imported gracefulShutdown
 process.on('SIGINT', () => {
   console.log('\n🛑 Received SIGINT. Shutting down gracefully...');
-  process.exit(0);
+  gracefulShutdown();
 });
 
 process.on('SIGTERM', () => {
   console.log('\n🛑 Received SIGTERM. Shutting down gracefully...');
-  process.exit(0);
+  gracefulShutdown();
 });
 
 // Unhandled promise rejection handler
 process.on('unhandledRejection', (err) => {
   console.log('❌ Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  process.exit(1);
+  gracefulShutdown();
 });
 
 // Uncaught exception handler
 process.on('uncaughtException', (err) => {
   console.log('❌ Uncaught Exception:', err);
-  process.exit(1);
+  gracefulShutdown();
 });
 
 const PORT = process.env.PORT || 3000;
 
-const startServer = (port) => {
-  const server = app.listen(port, () => {
-    console.log(`
+const startServer = async (port) => {
+  try {
+    // Test database connection before starting server
+    await testDatabaseConnection();
+    
+    const server = app.listen(port, () => {
+      console.log(`
 🚀 EduLMS Server Started Successfully!
 ----------------------------------------
 🌍 Environment: ${process.env.NODE_ENV || 'development'}
@@ -317,19 +342,26 @@ const startServer = (port) => {
 🔗 URL: http://localhost:${port}
 📊 Version: ${process.env.APP_VERSION || '1.0.0'}
 ⏰ Started: ${new Date().toLocaleString()}
+💾 Database: Connected
 ----------------------------------------
-    `);
-  });
+      `);
+    });
 
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`⚠️  Port ${port} is busy, trying port ${port + 1}...`);
-      startServer(port + 1);
-    } else {
-      console.error('❌ Server error:', err);
-      process.exit(1);
-    }
-  });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️  Port ${port} is busy, trying port ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error('❌ Server error:', err);
+        gracefulShutdown();
+      }
+    });
+
+    return server;
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 // Start the server

@@ -7,6 +7,7 @@ const { emailService } = require('../../services/emailService');
 const { validationResult } = require('express-validator');
 
 const paymentController = {
+  
   // Process M-Pesa payment
   processMpesaPayment: async (req, res) => {
     try {
@@ -245,7 +246,85 @@ const paymentController = {
       });
     }
   },
+// Add these methods to your existing paymentController
 
+// Get payment by ID
+getPaymentById: async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const payment = await Payment.findById(id)
+      .populate('student', 'studentId user')
+      .populate({
+        path: 'student',
+        populate: { path: 'user', select: 'firstName lastName email' }
+      })
+      .populate('verifiedBy', 'firstName lastName');
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+
+    // Check if user has permission to view this payment
+    if (req.user.role === 'student' && payment.student._id.toString() !== req.user.studentId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: payment
+    });
+  } catch (error) {
+    console.error('Get payment by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+},
+
+// Get student's payment history (for student role)
+getMyPayments: async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const studentId = req.user.studentId; // Assuming student ID is stored in user
+    
+    const filter = { student: studentId };
+    if (status) filter.status = status;
+
+    const payments = await Payment.find(filter)
+      .populate('student', 'studentId user')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Payment.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        payments,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Get my payments error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+},
   // Get payment statistics
   getPaymentStats: async (req, res) => {
     try {

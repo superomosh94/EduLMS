@@ -330,6 +330,151 @@ const notificationController = {
         error: error.message
       });
     }
+  },
+
+  // Get single notification
+  getNotification: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const notification = await Notification.findOne({
+        _id: id,
+        $or: [
+          { recipients: userId },
+          { targetRoles: req.user.role },
+          { targetUsers: 'all' }
+        ]
+      }).populate('createdBy', 'firstName lastName');
+
+      if (!notification) {
+        return res.status(404).json({
+          success: false,
+          message: 'Notification not found'
+        });
+      }
+
+      // Mark as read when viewing
+      if (!notification.readBy.includes(userId)) {
+        notification.readBy.push(userId);
+        await notification.save();
+      }
+
+      res.status(200).json({
+        success: true,
+        data: notification
+      });
+    } catch (error) {
+      console.error('Get notification error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading notification',
+        error: error.message
+      });
+    }
+  },
+
+  // Get unread notifications only
+  getUnreadNotifications: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { page = 1, limit = 20 } = req.query;
+
+      const filter = {
+        $or: [
+          { recipients: userId },
+          { targetRoles: req.user.role },
+          { targetUsers: 'all' }
+        ],
+        readBy: { $ne: userId }
+      };
+
+      const notifications = await Notification.find(filter)
+        .populate('createdBy', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+
+      const total = await Notification.countDocuments(filter);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          notifications,
+          totalPages: Math.ceil(total / limit),
+          currentPage: page,
+          total
+        }
+      });
+    } catch (error) {
+      console.error('Get unread notifications error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading unread notifications',
+        error: error.message
+      });
+    }
+  },
+
+  // Get unread count for API
+  getUnreadCount: async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const unreadCount = await Notification.countDocuments({
+        $or: [
+          { recipients: userId },
+          { targetRoles: req.user.role },
+          { targetUsers: 'all' }
+        ],
+        readBy: { $ne: userId }
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          unreadCount
+        }
+      });
+    } catch (error) {
+      console.error('Get unread count error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting unread count',
+        error: error.message
+      });
+    }
+  },
+
+  // Get recent notifications for API
+  getRecentNotifications: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit) || 10;
+
+      const notifications = await Notification.find({
+        $or: [
+          { recipients: userId },
+          { targetRoles: req.user.role },
+          { targetUsers: 'all' }
+        ]
+      })
+        .populate('createdBy', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .limit(limit);
+
+      res.status(200).json({
+        success: true,
+        data: notifications
+      });
+    } catch (error) {
+      console.error('Get recent notifications error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading recent notifications',
+        error: error.message
+      });
+    }
   }
 };
 

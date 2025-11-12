@@ -1,414 +1,529 @@
+const db = require('../../../config/database');
 const Course = require('../../models/Course');
-const Enrollment = require('../../models/Enrollment');
-const User = require('../../models/User');
-const { validationResult } = require('express-validator');
-const { fileService } = require('../../services/fileService');
+const { ROLES } = require('../../../config/constants');
 
 const courseController = {
-  // Create new course
+  // List all courses (with pagination and filtering)
+  listCourses: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const category = req.query.category || '';
+      const instructor = req.query.instructor || '';
+      const level = req.query.level || '';
+      const search = req.query.search || '';
+
+      const filters = {};
+      if (category) filters.category = category;
+      if (instructor) filters.instructor = instructor;
+      if (level) filters.level = level;
+      if (search) filters.search = search;
+
+      const coursesData = await Course.getCourses(filters, page, limit);
+
+      res.json({
+        success: true,
+        data: {
+          courses: coursesData.courses,
+          pagination: {
+            current: page,
+            pages: coursesData.totalPages,
+            total: coursesData.total
+          }
+        }
+      });
+    } catch (error) {
+      console.error('List courses error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading courses',
+        error: error.message
+      });
+    }
+  },
+
+  // List public courses (no authentication required)
+  listPublicCourses: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 8;
+
+      const coursesData = await Course.getPublicCourses(page, limit);
+
+      res.json({
+        success: true,
+        data: {
+          courses: coursesData.courses,
+          pagination: {
+            current: page,
+            pages: coursesData.totalPages,
+            total: coursesData.total
+          }
+        }
+      });
+    } catch (error) {
+      console.error('List public courses error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading public courses',
+        error: error.message
+      });
+    }
+  },
+
+  // View single course
+  viewCourse: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const course = await Course.findById(courseId);
+
+      if (!course) {
+        return res.status(404).json({
+          success: false,
+          message: 'Course not found'
+        });
+      }
+
+      // Check if user is enrolled (for students) or is instructor/admin
+      let isEnrolled = false;
+      if (req.user.role_name === ROLES.STUDENT) {
+        const enrollment = await db.query(
+          'SELECT id FROM enrollments WHERE course_id = ? AND student_id = ? AND status = "active"',
+          [courseId, req.user.id]
+        );
+        isEnrolled = enrollment.length > 0;
+      }
+
+      const canAccess = [ROLES.ADMIN, ROLES.INSTRUCTOR].includes(req.user.role_name) || isEnrolled;
+
+      if (!canAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not enrolled in this course'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: course
+      });
+    } catch (error) {
+      console.error('View course error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading course',
+        error: error.message
+      });
+    }
+  },
+
+  // View public course (no authentication required)
+  viewPublicCourse: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const course = await Course.getPublicCourse(courseId);
+
+      if (!course) {
+        return res.status(404).json({
+          success: false,
+          message: 'Course not found or not publicly available'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: course
+      });
+    } catch (error) {
+      console.error('View public course error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading public course',
+        error: error.message
+      });
+    }
+  },
+
+  // Available courses for enrollment
+  availableCourses: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 12;
+
+      const coursesData = await Course.getAvailableCourses(req.user.id, page, limit);
+
+      res.json({
+        success: true,
+        data: {
+          courses: coursesData.courses,
+          pagination: {
+            current: page,
+            pages: coursesData.totalPages,
+            total: coursesData.total
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Available courses error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading available courses',
+        error: error.message
+      });
+    }
+  },
+
+  // Enroll in course
+  enrollInCourse: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+
+      // Check if already enrolled
+      const existingEnrollment = await db.query(
+        'SELECT id FROM enrollments WHERE course_id = ? AND student_id = ?',
+        [courseId, studentId]
+      );
+
+      if (existingEnrollment.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'You are already enrolled in this course'
+        });
+      }
+
+      // Create enrollment
+      await db.query(
+        'INSERT INTO enrollments (course_id, student_id, enrolled_at, status) VALUES (?, ?, NOW(), "active")',
+        [courseId, studentId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Successfully enrolled in course'
+      });
+    } catch (error) {
+      console.error('Enroll in course error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error enrolling in course',
+        error: error.message
+      });
+    }
+  },
+
+  // Drop course
+  dropCourse: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+
+      await db.query(
+        'UPDATE enrollments SET status = "dropped", dropped_at = NOW() WHERE course_id = ? AND student_id = ?',
+        [courseId, studentId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Successfully dropped course'
+      });
+    } catch (error) {
+      console.error('Drop course error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error dropping course',
+        error: error.message
+      });
+    }
+  },
+
+  // Create course (instructor/admin only)
   createCourse: async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation errors',
-          errors: errors.array()
-        });
-      }
+      const instructorId = req.user.id;
+      const courseData = req.body;
 
-      const {
-        courseCode,
-        courseName,
-        description,
-        credits,
-        department,
-        program,
-        semester,
-        academicYear,
-        maxStudents,
-        prerequisites,
-        learningObjectives,
-        instructorId
-      } = req.body;
+      const courseId = await Course.create(courseData, instructorId);
 
-      // Check if course code already exists
-      const existingCourse = await Course.findOne({ courseCode });
-      if (existingCourse) {
-        return res.status(400).json({
-          success: false,
-          message: 'Course code already exists'
-        });
-      }
-
-      const course = new Course({
-        courseCode,
-        courseName,
-        description,
-        credits,
-        department,
-        program,
-        semester,
-        academicYear,
-        maxStudents,
-        prerequisites: prerequisites || [],
-        learningObjectives: learningObjectives || [],
-        instructor: instructorId,
-        createdBy: req.user.id
-      });
-
-      await course.save();
-
-      // Populate the instructor details
-      await course.populate('instructor', 'firstName lastName email');
-      await course.populate('createdBy', 'firstName lastName');
-
-      res.status(201).json({
+      res.json({
         success: true,
         message: 'Course created successfully',
-        data: course
+        data: { courseId }
       });
     } catch (error) {
       console.error('Create course error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error creating course',
         error: error.message
       });
     }
   },
 
-  // Get all courses
-  getCourses: async (req, res) => {
-    try {
-      const {
-        page = 1,
-        limit = 10,
-        department,
-        program,
-        semester,
-        academicYear,
-        instructorId,
-        status = 'active'
-      } = req.query;
-
-      const filter = { status };
-      
-      if (department) filter.department = department;
-      if (program) filter.program = program;
-      if (semester) filter.semester = semester;
-      if (academicYear) filter.academicYear = academicYear;
-      if (instructorId) filter.instructor = instructorId;
-
-      const courses = await Course.find(filter)
-        .populate('instructor', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName')
-        .sort({ createdAt: -1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      const total = await Course.countDocuments(filter);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          courses,
-          totalPages: Math.ceil(total / limit),
-          currentPage: page,
-          total
-        }
-      });
-    } catch (error) {
-      console.error('Get courses error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: error.message
-      });
-    }
-  },
-
-  // Get course by ID
-  getCourse: async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      const course = await Course.findById(id)
-        .populate('instructor', 'firstName lastName email phone')
-        .populate('createdBy', 'firstName lastName')
-        .populate('prerequisites', 'courseCode courseName credits');
-
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
-
-      // Get enrollment count
-      const enrollmentCount = await Enrollment.countDocuments({
-        course: id,
-        status: 'active'
-      });
-
-      // Get course materials count
-      const materialsCount = course.materials ? course.materials.length : 0;
-
-      res.status(200).json({
-        success: true,
-        data: {
-          ...course.toObject(),
-          enrollmentCount,
-          materialsCount
-        }
-      });
-    } catch (error) {
-      console.error('Get course error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: error.message
-      });
-    }
-  },
-
-  // Update course
+  // Update course (instructor/admin only)
   updateCourse: async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation errors',
-          errors: errors.array()
-        });
-      }
-
-      const { id } = req.params;
+      const courseId = req.params.courseId;
       const updateData = req.body;
 
-      const course = await Course.findByIdAndUpdate(
-        id,
-        { ...updateData, updatedBy: req.user.id },
-        { new: true, runValidators: true }
-      )
-        .populate('instructor', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName');
+      await Course.update(courseId, updateData);
 
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
-
-      res.status(200).json({
+      res.json({
         success: true,
-        message: 'Course updated successfully',
-        data: course
+        message: 'Course updated successfully'
       });
     } catch (error) {
       console.error('Update course error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error updating course',
         error: error.message
       });
     }
   },
 
-  // Delete course
+  // Delete course (instructor/admin only)
   deleteCourse: async (req, res) => {
     try {
-      const { id } = req.params;
+      const courseId = req.params.courseId;
 
-      const course = await Course.findById(id);
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
+      await Course.delete(courseId);
 
-      // Check if course has active enrollments
-      const activeEnrollments = await Enrollment.countDocuments({
-        course: id,
-        status: 'active'
-      });
-
-      if (activeEnrollments > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot delete course with active enrollments'
-        });
-      }
-
-      await Course.findByIdAndUpdate(id, { 
-        status: 'archived',
-        updatedBy: req.user.id 
-      });
-
-      res.status(200).json({
+      res.json({
         success: true,
-        message: 'Course archived successfully'
+        message: 'Course deleted successfully'
       });
     } catch (error) {
       console.error('Delete course error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error deleting course',
         error: error.message
       });
     }
   },
 
-  // Add course material
-  addCourseMaterial: async (req, res) => {
+  // Get course materials
+  getCourseMaterials: async (req, res) => {
     try {
-      const { id } = req.params;
-      const { title, description, type } = req.body;
+      const courseId = req.params.courseId;
+      const materials = await Course.getMaterials(courseId);
 
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'File is required'
-        });
-      }
-
-      const course = await Course.findById(id);
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
-
-      const material = {
-        title,
-        description,
-        type: type || 'document',
-        fileName: req.file.originalname,
-        filePath: req.file.path,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-        uploadedBy: req.user.id,
-        uploadedAt: new Date()
-      };
-
-      course.materials.push(material);
-      await course.save();
-
-      res.status(201).json({
+      res.json({
         success: true,
-        message: 'Course material added successfully',
-        data: material
+        data: materials
       });
     } catch (error) {
-      console.error('Add course material error:', error);
+      console.error('Get course materials error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error loading course materials',
         error: error.message
       });
     }
   },
 
-  // Remove course material
-  removeCourseMaterial: async (req, res) => {
+  // Download course material
+  downloadMaterial: async (req, res) => {
     try {
-      const { id, materialId } = req.params;
+      const { courseId, materialId } = req.params;
+      const material = await Course.getMaterial(courseId, materialId);
 
-      const course = await Course.findById(id);
-      if (!course) {
-        return res.status(404).json({
-          success: false,
-          message: 'Course not found'
-        });
-      }
-
-      const material = course.materials.id(materialId);
       if (!material) {
         return res.status(404).json({
           success: false,
-          message: 'Course material not found'
+          message: 'Material not found'
         });
       }
 
-      // Delete file from storage
-      await fileService.deleteFile(material.filePath);
-
-      course.materials.pull(materialId);
-      await course.save();
-
-      res.status(200).json({
+      // In a real application, you would serve the file
+      // For now, return the material info
+      res.json({
         success: true,
-        message: 'Course material removed successfully'
+        data: material
       });
     } catch (error) {
-      console.error('Remove course material error:', error);
+      console.error('Download material error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error downloading material',
         error: error.message
       });
     }
   },
 
-  // Get course statistics
-  getCourseStats: async (req, res) => {
+  // Upload course material (instructor/admin only)
+  uploadMaterial: async (req, res) => {
     try {
-      const { academicYear, semester } = req.query;
-      const filter = {};
+      const courseId = req.params.courseId;
+      const materialData = req.body;
 
-      if (academicYear) filter.academicYear = academicYear;
-      if (semester) filter.semester = semester;
+      const materialId = await Course.addMaterial(courseId, materialData);
 
-      const stats = await Course.aggregate([
-        { $match: filter },
-        {
-          $group: {
-            _id: '$department',
-            totalCourses: { $sum: 1 },
-            totalCredits: { $sum: '$credits' },
-            averageCredits: { $avg: '$credits' }
-          }
-        }
-      ]);
-
-      const enrollmentStats = await Enrollment.aggregate([
-        {
-          $lookup: {
-            from: 'courses',
-            localField: 'course',
-            foreignField: '_id',
-            as: 'course'
-          }
-        },
-        { $unwind: '$course' },
-        { $match: filter },
-        {
-          $group: {
-            _id: '$course.department',
-            totalEnrollments: { $sum: 1 },
-            activeEnrollments: {
-              $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] }
-            }
-          }
-        }
-      ]);
-
-      res.status(200).json({
+      res.json({
         success: true,
-        data: {
-          departmentStats: stats,
-          enrollmentStats
-        }
+        message: 'Material uploaded successfully',
+        data: { materialId }
       });
     } catch (error) {
-      console.error('Get course stats error:', error);
+      console.error('Upload material error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error uploading material',
+        error: error.message
+      });
+    }
+  },
+
+  // Delete course material (instructor/admin only)
+  deleteMaterial: async (req, res) => {
+    try {
+      const { courseId, materialId } = req.params;
+
+      await Course.deleteMaterial(courseId, materialId);
+
+      res.json({
+        success: true,
+        message: 'Material deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete material error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error deleting material',
+        error: error.message
+      });
+    }
+  },
+
+  // Get course reviews
+  getCourseReviews: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const reviews = await Course.getReviews(courseId);
+
+      res.json({
+        success: true,
+        data: reviews
+      });
+    } catch (error) {
+      console.error('Get course reviews error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading course reviews',
+        error: error.message
+      });
+    }
+  },
+
+  // Submit course review
+  submitReview: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+      const reviewData = req.body;
+
+      const reviewId = await Course.addReview(courseId, studentId, reviewData);
+
+      res.json({
+        success: true,
+        message: 'Review submitted successfully',
+        data: { reviewId }
+      });
+    } catch (error) {
+      console.error('Submit review error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error submitting review',
+        error: error.message
+      });
+    }
+  },
+
+  // Get course announcements
+  getAnnouncements: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const announcements = await Course.getAnnouncements(courseId);
+
+      res.json({
+        success: true,
+        data: announcements
+      });
+    } catch (error) {
+      console.error('Get announcements error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading announcements',
+        error: error.message
+      });
+    }
+  },
+
+  // Create announcement (instructor/admin only)
+  createAnnouncement: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const instructorId = req.user.id;
+      const announcementData = req.body;
+
+      const announcementId = await Course.createAnnouncement(courseId, instructorId, announcementData);
+
+      res.json({
+        success: true,
+        message: 'Announcement created successfully',
+        data: { announcementId }
+      });
+    } catch (error) {
+      console.error('Create announcement error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error creating announcement',
+        error: error.message
+      });
+    }
+  },
+
+  // Get course progress
+  getCourseProgress: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+
+      const progress = await Course.getProgress(courseId, studentId);
+
+      res.json({
+        success: true,
+        data: progress
+      });
+    } catch (error) {
+      console.error('Get course progress error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading course progress',
+        error: error.message
+      });
+    }
+  },
+
+  // Update course progress
+  updateProgress: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+      const progressData = req.body;
+
+      await Course.updateProgress(courseId, studentId, progressData);
+
+      res.json({
+        success: true,
+        message: 'Progress updated successfully'
+      });
+    } catch (error) {
+      console.error('Update progress error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error updating progress',
         error: error.message
       });
     }
@@ -417,43 +532,111 @@ const courseController = {
   // Search courses
   searchCourses: async (req, res) => {
     try {
-      const { q, department, program, page = 1, limit = 10 } = req.query;
+      const query = req.params.query;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
 
-      const filter = { status: 'active' };
-      
-      if (department) filter.department = department;
-      if (program) filter.program = program;
+      const results = await Course.search(query, page, limit);
 
-      if (q) {
-        filter.$or = [
-          { courseCode: { $regex: q, $options: 'i' } },
-          { courseName: { $regex: q, $options: 'i' } },
-          { description: { $regex: q, $options: 'i' } }
-        ];
-      }
-
-      const courses = await Course.find(filter)
-        .populate('instructor', 'firstName lastName email')
-        .sort({ courseCode: 1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      const total = await Course.countDocuments(filter);
-
-      res.status(200).json({
+      res.json({
         success: true,
-        data: {
-          courses,
-          totalPages: Math.ceil(total / limit),
-          currentPage: page,
-          total
-        }
+        data: results
       });
     } catch (error) {
       console.error('Search courses error:', error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
+        message: 'Error searching courses',
+        error: error.message
+      });
+    }
+  },
+
+  // Get courses by category
+  getCoursesByCategory: async (req, res) => {
+    try {
+      const categoryId = req.params.categoryId;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      const courses = await Course.getByCategory(categoryId, page, limit);
+
+      res.json({
+        success: true,
+        data: courses
+      });
+    } catch (error) {
+      console.error('Get courses by category error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading courses by category',
+        error: error.message
+      });
+    }
+  },
+
+  // Get courses by instructor
+  getCoursesByInstructor: async (req, res) => {
+    try {
+      const instructorId = req.params.instructorId;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      const courses = await Course.getByInstructor(instructorId, page, limit);
+
+      res.json({
+        success: true,
+        data: courses
+      });
+    } catch (error) {
+      console.error('Get courses by instructor error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error loading courses by instructor',
+        error: error.message
+      });
+    }
+  },
+
+  // Generate certificate
+  generateCertificate: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+
+      const certificate = await Course.generateCertificate(courseId, studentId);
+
+      res.json({
+        success: true,
+        data: certificate
+      });
+    } catch (error) {
+      console.error('Generate certificate error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error generating certificate',
+        error: error.message
+      });
+    }
+  },
+
+  // Mark course as complete
+  markCourseComplete: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const studentId = req.user.id;
+
+      await Course.markComplete(courseId, studentId);
+
+      res.json({
+        success: true,
+        message: 'Course marked as complete'
+      });
+    } catch (error) {
+      console.error('Mark course complete error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error marking course as complete',
         error: error.message
       });
     }
