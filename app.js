@@ -357,7 +357,7 @@ const startServer = async (port) => {
       }
     });
 
-    return server;
+    return server; 
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
@@ -367,4 +367,4 @@ const startServer = async (port) => {
 // Start the server
 startServer(PORT);
 
-module.exports = app;
+module.exports = app; 

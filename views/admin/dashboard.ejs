@@ -1,10 +1,3 @@
-<%- include('../layouts/admin-layout', {
-    title: 'Admin Dashboard - EduLMS',
-    pageTitle: 'Admin Dashboard',
-    currentPage: 'dashboard',
-    user: typeof user !== 'undefined' ? user : null
-}) %>
-
 <style>
     .stat-card {
         background: white;
@@ -141,126 +134,123 @@
     </div>
 
     <!-- Quick Actions & Recent Activity -->
-    <div class="row">
-        <!-- Quick Actions -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <a href="/admin/users/create" class="quick-action-btn">
-                                <i class="fas fa-user-plus fa-2x mb-2"></i>
-                                <div>Add User</div>
-                            </a>
-                        </div>
-                        <div class="col-6">
-                            <a href="/admin/courses/create" class="quick-action-btn">
-                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
-                                <div>Create Course</div>
-                            </a>
-                        </div>
-                        <div class="col-6">
-                            <a href="/admin/students" class="quick-action-btn">
-                                <i class="fas fa-user-graduate fa-2x mb-2"></i>
-                                <div>Manage Students</div>
-                            </a>
-                        </div>
-                        <div class="col-6">
-                            <a href="/admin/instructors" class="quick-action-btn">
-                                <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
-                                <div>Manage Instructors</div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                </h5>
             </div>
-
-            <!-- System Status -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-heartbeat me-2 text-danger"></i>System Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            Database
-                            <span class="badge bg-success">Online</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            Storage
-                            <span class="badge bg-success">25% used</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            Memory
-                            <span class="badge bg-success">45% used</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            Uptime
-                            <span class="badge bg-info">100%</span>
-                        </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/admin/users/create" class="quick-action-btn">
+                            <i class="fas fa-user-plus fa-2x mb-2"></i>
+                            <div>Add User</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/admin/courses/create" class="quick-action-btn">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                            <div>Create Course</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/admin/students" class="quick-action-btn">
+                            <i class="fas fa-user-graduate fa-2x mb-2"></i>
+                            <div>Manage Students</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/admin/instructors" class="quick-action-btn">
+                            <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
+                            <div>Manage Instructors</div>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="col-lg-8 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-history me-2 text-primary"></i>Recent Activity
-                    </h5>
-                    <a href="/admin/activity" class="btn btn-sm btn-outline-primary">View All</a>
+        <!-- System Status -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat me-2 text-danger"></i>System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Database
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Storage
+                        <span class="badge bg-success">25% used</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Memory
+                        <span class="badge bg-success">45% used</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        Uptime
+                        <span class="badge bg-info">100%</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item px-0">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <i class="fas fa-user-plus me-2 text-success"></i>
-                                    New user registration
-                                </h6>
-                                <small class="text-muted">Just now</small>
-                            </div>
-                            <p class="mb-1 small text-muted">A new student registered in the system</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2 text-primary"></i>Recent Activity
+                </h5>
+                <a href="/admin/activity" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-user-plus me-2 text-success"></i>
+                                New user registration
+                            </h6>
+                            <small class="text-muted">Just now</small>
                         </div>
-                        <div class="list-group-item px-0">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <i class="fas fa-sign-in-alt me-2 text-info"></i>
-                                    User login
-                                </h6>
-                                <small class="text-muted">5 minutes ago</small>
-                            </div>
-                            <p class="mb-1 small text-muted">Admin user logged into the system</p>
+                        <p class="mb-1 small text-muted">A new student registered in the system</p>
+                    </div>
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-sign-in-alt me-2 text-info"></i>
+                                User login
+                            </h6>
+                            <small class="text-muted">5 minutes ago</small>
                         </div>
-                        <div class="list-group-item px-0">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <i class="fas fa-cog me-2 text-warning"></i>
-                                    System update
-                                </h6>
-                                <small class="text-muted">1 hour ago</small>
-                            </div>
-                            <p class="mb-1 small text-muted">System settings were updated</p>
+                        <p class="mb-1 small text-muted">Admin user logged into the system</p>
+                    </div>
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-cog me-2 text-warning"></i>
+                                System update
+                            </h6>
+                            <small class="text-muted">1 hour ago</small>
                         </div>
-                        <div class="list-group-item px-0">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <i class="fas fa-database me-2 text-secondary"></i>
-                                    Database maintenance
-                                </h6>
-                                <small class="text-muted">2 hours ago</small>
-                            </div>
-                            <p class="mb-1 small text-muted">Routine database optimization performed</p>
+                        <p class="mb-1 small text-muted">System settings were updated</p>
+                    </div>
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-database me-2 text-secondary"></i>
+                                Database maintenance
+                            </h6>
+                            <small class="text-muted">2 hours ago</small>
                         </div>
+                        <p class="mb-1 small text-muted">Routine database optimization performed</p>
                     </div>
                 </div>
             </div>
@@ -268,36 +258,34 @@
     </div>
 
     <!-- Getting Started -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-rocket me-2 text-info"></i>Getting Started
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        <i class="fas fa-users text-primary me-2"></i>User Management
-                                    </h5>
-                                    <p class="card-text">Manage students, instructors, and administrators. Create new accounts and modify user roles.</p>
-                                    <a href="/admin/users" class="btn btn-primary btn-sm">Manage Users</a>
-                                </div>
+    <div class="col-12 mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket me-2 text-info"></i>Getting Started
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-users text-primary me-2"></i>User Management
+                                </h5>
+                                <p class="card-text">Manage students, instructors, and administrators. Create new accounts and modify user roles.</p>
+                                <a href="/admin/users" class="btn btn-primary btn-sm">Manage Users</a>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        <i class="fas fa-book text-success me-2"></i>Course Management
-                                    </h5>
-                                    <p class="card-text">Create and manage courses, assignments, and learning materials for your institution.</p>
-                                    <a href="/admin/courses" class="btn btn-success btn-sm">Manage Courses</a>
-                                </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-book text-success me-2"></i>Course Management
+                                </h5>
+                                <p class="card-text">Create and manage courses, assignments, and learning materials for your institution.</p>
+                                <a href="/admin/courses" class="btn btn-success btn-sm">Manage Courses</a>
                             </div>
                         </div>
                     </div>
