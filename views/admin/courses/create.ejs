@@ -1,0 +1,482 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'courses';
+    title = 'Create Course - EduLMS';
+%>
+
+<style>
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .breadcrumb {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+    
+    .card-header {
+        background: #fff;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 0.875rem;
+    }
+    
+    .form-control, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        background: #fff;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 1px solid #d1d3e2;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 0.875rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .tips {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .tip-item {
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 6px;
+        border-left: 4px solid var(--info);
+    }
+    
+    .tip-item strong {
+        color: var(--dark);
+        font-size: 0.875rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .tip-item p {
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .fee-structure {
+        background: #f8f9fc;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid var(--warning);
+    }
+    
+    .fee-structure h6 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .fee-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .fee-item:last-child {
+        border-bottom: none;
+    }
+    
+    .fee-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .fee-value {
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    @media (max-width: 768px) {
+        .row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Create New Course</h1>
+    <div class="breadcrumb">
+        <a href="/admin/dashboard">Home</a> / 
+        <a href="/admin/courses">Courses</a> / 
+        <span>Create Course</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Course Information</h5>
+            </div>
+            <div class="card-body">
+                <form action="/admin/courses/create" method="POST" id="createCourseForm">
+                    <div class="form-group">
+                        <label for="courseCode" class="form-label">Course Code *</label>
+                        <input type="text" id="courseCode" name="courseCode" class="form-control" required 
+                               placeholder="e.g., CS101, MATH201">
+                        <small class="form-text">Unique identifier for the course</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseName" class="form-label">Course Name *</label>
+                        <input type="text" id="courseName" name="courseName" class="form-control" required 
+                               placeholder="e.g., Introduction to Computer Science">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department" class="form-label">Department</label>
+                            <select id="department" name="department" class="form-select">
+                                <option value="">Select Department</option>
+                                <option value="computer-science">Computer Science</option>
+                                <option value="mathematics">Mathematics</option>
+                                <option value="physics">Physics</option>
+                                <option value="chemistry">Chemistry</option>
+                                <option value="biology">Biology</option>
+                                <option value="business">Business</option>
+                                <option value="engineering">Engineering</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="credits" class="form-label">Credit Hours</label>
+                            <input type="number" id="credits" name="credits" class="form-control" 
+                                   min="1" max="10" value="3">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instructor" class="form-label">Instructor</label>
+                        <select id="instructor" name="instructor_id" class="form-select">
+                            <option value="">Select Instructor</option>
+                            <!-- Instructors would be populated from backend -->
+                            <option value="1">Dr. John Smith</option>
+                            <option value="2">Prof. Sarah Johnson</option>
+                            <option value="3">Dr. Mike Williams</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description" class="form-label">Course Description</label>
+                        <textarea id="description" name="description" class="form-textarea" 
+                                  placeholder="Provide a detailed description of the course..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" id="endDate" name="endDate" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxStudents" class="form-label">Maximum Students</label>
+                            <input type="number" id="maxStudents" name="maxStudents" class="form-control" 
+                                   min="1" max="500" value="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="courseFee" class="form-label">Course Fee (KES)</label>
+                            <input type="number" id="courseFee" name="courseFee" class="form-control" 
+                                   min="0" step="100" value="15000">
+                        </div>
+                    </div>
+
+                    <div class="fee-structure">
+                        <h6>Fee Breakdown</h6>
+                        <div class="fee-item">
+                            <span class="fee-label">Tuition Fee</span>
+                            <span class="fee-value" id="tuitionFee">KES 12,000</span>
+                        </div>
+                        <div class="fee-item">
+                            <span class="fee-label">Registration Fee</span>
+                            <span class="fee-value" id="registrationFee">KES 2,000</span>
+                        </div>
+                        <div class="fee-item">
+                            <span class="fee-label">Materials Fee</span>
+                            <span class="fee-value" id="materialsFee">KES 1,000</span>
+                        </div>
+                        <div class="fee-item" style="border-top: 2px solid var(--dark); padding-top: 0.75rem;">
+                            <span class="fee-label" style="font-weight: 600;">Total</span>
+                            <span class="fee-value" style="font-size: 1.1rem;" id="totalFee">KES 15,000</span>
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="isActive" name="isActive" class="form-check-input" checked>
+                        <label for="isActive" class="form-check-label">
+                            Active Course
+                        </label>
+                    </div>
+                    <small class="form-text">
+                        Active courses are visible to students and available for enrollment
+                    </small>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Create Course
+                        </button>
+                        <a href="/admin/courses" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-content">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Course Creation Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="tips">
+                    <div class="tip-item">
+                        <strong>Course Code Format</strong>
+                        <p>Use consistent course codes (e.g., DEPT101) for easy identification and organization.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Instructor Assignment</strong>
+                        <p>Assign instructors before making the course active to ensure proper management.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Fee Structure</strong>
+                        <p>Set appropriate fees considering market rates and institutional policies.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Capacity Planning</strong>
+                        <p>Set realistic maximum student numbers based on available resources and facilities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid" style="grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="detail-item">
+                        <span class="detail-label">Total Courses</span>
+                        <span class="detail-value">24</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Active Courses</span>
+                        <span class="detail-value">18</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Average Enrollment</span>
+                        <span class="detail-value">35 students</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Completion Rate</span>
+                        <span class="detail-value">87%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const courseFeeInput = document.getElementById('courseFee');
+    const tuitionFee = document.getElementById('tuitionFee');
+    const registrationFee = document.getElementById('registrationFee');
+    const materialsFee = document.getElementById('materialsFee');
+    const totalFee = document.getElementById('totalFee');
+
+    function updateFeeBreakdown() {
+        const total = parseInt(courseFeeInput.value) || 0;
+        const tuition = Math.floor(total * 0.8);
+        const registration = Math.floor(total * 0.13);
+        const materials = total - tuition - registration;
+
+        tuitionFee.textContent = `KES ${tuition.toLocaleString()}`;
+        registrationFee.textContent = `KES ${registration.toLocaleString()}`;
+        materialsFee.textContent = `KES ${materials.toLocaleString()}`;
+        totalFee.textContent = `KES ${total.toLocaleString()}`;
+    }
+
+    courseFeeInput.addEventListener('input', updateFeeBreakdown);
+    updateFeeBreakdown(); // Initial calculation
+
+    const form = document.getElementById('createCourseForm');
+    form.addEventListener('submit', function(e) {
+        const courseCode = document.getElementById('courseCode').value.trim();
+        const courseName = document.getElementById('courseName').value.trim();
+        
+        if (!courseCode || !courseName) {
+            e.preventDefault();
+            alert('Please fill in all required fields (Course Code and Course Name).');
+            return;
+        }
+
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+            e.preventDefault();
+            alert('End date cannot be before start date.');
+            return;
+        }
+    });
+});
+</script>

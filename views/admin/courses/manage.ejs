@@ -1,0 +1,512 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'courses';
+    title = 'Manage Course - EduLMS';
+%>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .course-header {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .course-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+    
+    .course-info h3 {
+        margin: 0;
+        color: var(--dark);
+    }
+    
+    .course-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .management-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 1.5rem;
+        transition: all 0.3s;
+        border-left: 4px solid var(--primary);
+    }
+    
+    .management-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .management-card.enrollments { border-left-color: var(--success); }
+    .management-card.assignments { border-left-color: var(--warning); }
+    .management-card.grades { border-left-color: var(--info); }
+    .management-card.materials { border-left-color: var(--danger); }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+    
+    .management-card.enrollments .card-icon { background: var(--success); }
+    .management-card.assignments .card-icon { background: var(--warning); }
+    .management-card.grades .card-icon { background: var(--info); }
+    .management-card.materials .card-icon { background: var(--danger); }
+    
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .card-stats {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-outline-primary {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        background: #e0a800;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .recent-activity {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 1.5rem;
+    }
+    
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .activity-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+    
+    .activity-item:hover {
+        background: #f8f9fc;
+        border-color: var(--primary-light);
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .activity-icon.enrollment { background: var(--success); }
+    .activity-icon.assignment { background: var(--warning); }
+    .activity-icon.submission { background: var(--info); }
+    .activity-icon.grade { background: var(--primary); }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-text {
+        color: var(--dark);
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .activity-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .management-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .course-header {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Course Management</h1>
+        <div class="breadcrumb">
+            <a href="/admin/dashboard">Home</a> / 
+            <a href="/admin/courses">Courses</a> / 
+            <span>Manage Course</span>
+        </div>
+    </div>
+</div>
+
+<!-- Course Header -->
+<div class="course-header">
+    <div class="course-icon">
+        <%= course.course_code.substring(0, 2) %>
+    </div>
+    <div class="course-info">
+        <h3><%= course.course_name %></h3>
+        <p><%= course.course_code %> • <%= course.instructor_name || 'No Instructor' %> • <%= course.is_active ? 'Active' : 'Inactive' %></p>
+    </div>
+</div>
+
+<!-- Management Grid -->
+<div class="management-grid">
+    <!-- Enrollments Card -->
+    <div class="management-card enrollments">
+        <div class="card-header">
+            <div class="card-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <h4 class="card-title">Student Enrollments</h4>
+                <p class="card-stats">42 enrolled • 8 spots remaining</p>
+            </div>
+        </div>
+        <p style="color: #6c757d; font-size: 0.875rem; margin: 0 0 1rem 0;">
+            Manage student enrollments, view attendance, and track participation.
+        </p>
+        <div class="card-actions">
+            <a href="/admin/courses/<%= course.id %>/enrollments" class="btn btn-primary">
+                <i class="fas fa-list me-1"></i>
+                View All Enrollments
+            </a>
+            <a href="/admin/courses/<%= course.id %>/enroll" class="btn btn-outline-primary">
+                <i class="fas fa-user-plus me-1"></i>
+                Enroll New Student
+            </a>
+            <a href="/admin/courses/<%= course.id %>/attendance" class="btn btn-outline-primary">
+                <i class="fas fa-clipboard-check me-1"></i>
+                Manage Attendance
+            </a>
+        </div>
+    </div>
+
+    <!-- Assignments Card -->
+    <div class="management-card assignments">
+        <div class="card-header">
+            <div class="card-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div>
+                <h4 class="card-title">Assignments</h4>
+                <p class="card-stats">8 assignments • 3 pending grading</p>
+            </div>
+        </div>
+        <p style="color: #6c757d; font-size: 0.875rem; margin: 0 0 1rem 0;">
+            Create assignments, track submissions, and manage grading workflow.
+        </p>
+        <div class="card-actions">
+            <a href="/admin/courses/<%= course.id %>/assignments" class="btn btn-warning">
+                <i class="fas fa-list me-1"></i>
+                View Assignments
+            </a>
+            <a href="/admin/courses/<%= course.id %>/assignments/create" class="btn btn-outline-primary">
+                <i class="fas fa-plus me-1"></i>
+                Create Assignment
+            </a>
+            <a href="/admin/courses/<%= course.id %>/submissions" class="btn btn-outline-primary">
+                <i class="fas fa-file-upload me-1"></i>
+                View Submissions
+            </a>
+        </div>
+    </div>
+
+    <!-- Grades Card -->
+    <div class="management-card grades">
+        <div class="card-header">
+            <div class="card-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div>
+                <h4 class="card-title">Grades & Analytics</h4>
+                <p class="card-stats">Average: B+ • Completion: 85%</p>
+            </div>
+        </div>
+        <p style="color: #6c757d; font-size: 0.875rem; margin: 0 0 1rem 0;">
+            Manage grades, view analytics, and generate performance reports.
+        </p>
+        <div class="card-actions">
+            <a href="/admin/courses/<%= course.id %>/grades" class="btn btn-success">
+                <i class="fas fa-table me-1"></i>
+                Gradebook
+            </a>
+            <a href="/admin/courses/<%= course.id %>/grades/analytics" class="btn btn-outline-primary">
+                <i class="fas fa-chart-line me-1"></i>
+                View Analytics
+            </a>
+            <a href="/admin/courses/<%= course.id %>/grades/report" class="btn btn-outline-primary">
+                <i class="fas fa-download me-1"></i>
+                Generate Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Materials Card -->
+    <div class="management-card materials">
+        <div class="card-header">
+            <div class="card-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div>
+                <h4 class="card-title">Course Materials</h4>
+                <p class="card-stats">15 files • 3 folders</p>
+            </div>
+        </div>
+        <p style="color: #6c757d; font-size: 0.875rem; margin: 0 0 1rem 0;">
+            Upload and organize course materials, readings, and resources.
+        </p>
+        <div class="card-actions">
+            <a href="/admin/courses/<%= course.id %>/materials" class="btn btn-primary">
+                <i class="fas fa-folder me-1"></i>
+                View Materials
+            </a>
+            <a href="/admin/courses/<%= course.id %>/materials/upload" class="btn btn-outline-primary">
+                <i class="fas fa-upload me-1"></i>
+                Upload Files
+            </a>
+            <a href="/admin/courses/<%= course.id %>/announcements" class="btn btn-outline-primary">
+                <i class="fas fa-bullhorn me-1"></i>
+                Post Announcement
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="recent-activity">
+    <div class="activity-header">
+        <h3 class="activity-title">Recent Activity</h3>
+        <a href="/admin/courses/<%= course.id %>/activity" class="btn btn-outline-primary btn-sm">
+            View All Activity
+        </a>
+    </div>
+    
+    <div class="activity-list">
+        <div class="activity-item">
+            <div class="activity-icon submission">
+                <i class="fas fa-file-upload"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">Mike Johnson submitted Assignment #3</div>
+                <div class="activity-time">2 hours ago</div>
+            </div>
+        </div>
+        
+        <div class="activity-item">
+            <div class="activity-icon grade">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">Assignment #2 grades published</div>
+                <div class="activity-time">1 day ago</div>
+            </div>
+        </div>
+        
+        <div class="activity-item">
+            <div class="activity-icon enrollment">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">Sarah Wilson enrolled in the course</div>
+                <div class="activity-time">2 days ago</div>
+            </div>
+        </div>
+        
+        <div class="activity-item">
+            <div class="activity-icon assignment">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">New assignment created: Final Project</div>
+                <div class="activity-time">3 days ago</div>
+            </div>
+        </div>
+        
+        <div class="activity-item">
+            <div class="activity-icon materials">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-text">Course materials updated for Week 5</div>
+                <div class="activity-time">4 days ago</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive functionality here
+    console.log('Course management page loaded for:', '<%= course.course_name %>');
+});
+</script>

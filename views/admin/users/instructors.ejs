@@ -1,0 +1,457 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'instructors';
+    title = 'Instructor Management - EduLMS';
+%>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-outline-primary {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+    
+    .card-header {
+        background: #fff;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .filters {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        background: #fff;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        background: #f8f9fc;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.875rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e3e6f0;
+        font-size: 0.875rem;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--info);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .user-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background: var(--success);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: var(--warning);
+        color: white;
+    }
+    
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+    
+    .btn-info {
+        background: var(--info);
+        color: white;
+        border: none;
+    }
+    
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+        border: none;
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+        border: none;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.25rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        text-align: center;
+        border-left: 4px solid var(--info);
+    }
+    
+    .stat-card h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .stat-card p {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .instructor-id {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: var(--info);
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Instructor Management</h1>
+    <div class="header-actions">
+        <a href="/admin/users/create" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i>
+            Add New Instructor
+        </a>
+    </div>
+</div>
+
+<!-- Instructor Statistics -->
+<div class="stats-overview">
+    <div class="stat-card">
+        <h3>
+            <% if (instructors && instructors.length) { %>
+                <%= instructors.length %>
+            <% } else { %>
+                0
+            <% } %>
+        </h3>
+        <p>Total Instructors</p>
+    </div>
+    <div class="stat-card">
+        <h3>
+            <% if (instructors && instructors.length) { %>
+                <%= instructors.filter(i => i.is_active).length %>
+            <% } else { %>
+                0
+            <% } %>
+        </h3>
+        <p>Active Instructors</p>
+    </div>
+    <div class="stat-card">
+        <h3>
+            <% if (instructors && instructors.length) { %>
+                <%= instructors.filter(i => !i.is_active).length %>
+            <% } else { %>
+                0
+            <% } %>
+        </h3>
+        <p>Inactive Instructors</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">All Instructors</h5>
+        <div class="filters">
+            <select id="statusFilter" class="form-select">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <input type="text" id="searchInstructors" class="form-control" placeholder="Search instructors...">
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table" id="instructorsTable">
+                <thead>
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Instructor ID</th>
+                        <th>Employee ID</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Registration Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (instructors && instructors.length > 0) { %>
+                        <% instructors.forEach(instructor => { %>
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            <%= instructor.initials %>
+                                        </div>
+                                        <div class="user-details">
+                                            <h6><%= instructor.name %></h6>
+                                            <small>Instructor</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="instructor-id"><%= instructor.teacher_id %></span>
+                                </td>
+                                <td>
+                                    <span class="instructor-id"><%= instructor.employee_id %></span>
+                                </td>
+                                <td><%= instructor.email %></td>
+                                <td>
+                                    <%= instructor.phone || '<span class="text-muted">N/A</span>' %>
+                                </td>
+                                <td>
+                                    <span class="badge badge-<%= instructor.is_active ? 'success' : 'secondary' %>">
+                                        <%= instructor.is_active ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= instructor.created_at ? new Date(instructor.created_at).toLocaleDateString() : 'N/A' %>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/users/<%= instructor.id %>" class="btn btn-sm btn-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/admin/users/<%= instructor.id %>/edit" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <% if (instructor.is_active) { %>
+                                            <form action="/admin/users/<%= instructor.id %>/delete" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" 
+                                                        onclick="return confirm('Are you sure you want to delete this instructor?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <button class="btn btn-sm btn-success" title="Activate" 
+                                                    onclick="activateUser(<%= instructor.id %>)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <h4>No Instructors Found</h4>
+                                    <p>There are no instructors registered in the system yet.</p>
+                                    <a href="/admin/users/create" class="btn btn-primary mt-2">
+                                        <i class="fas fa-user-plus me-1"></i>
+                                        Add First Instructor
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInstructors');
+    
+    function filterInstructors() {
+        const status = statusFilter.value.toLowerCase();
+        const search = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('#instructorsTable tbody tr');
+        
+        rows.forEach(row => {
+            const statusCell = row.cells[5].textContent.toLowerCase();
+            const nameCell = row.cells[0].textContent.toLowerCase();
+            const emailCell = row.cells[3].textContent.toLowerCase();
+            const instructorIdCell = row.cells[1].textContent.toLowerCase();
+            
+            const statusMatch = !status || statusCell.includes(status);
+            const searchMatch = !search || 
+                nameCell.includes(search) || 
+                emailCell.includes(search) ||
+                instructorIdCell.includes(search);
+            
+            row.style.display = statusMatch && searchMatch ? '' : 'none';
+        });
+    }
+    
+    statusFilter.addEventListener('change', filterInstructors);
+    searchInput.addEventListener('input', filterInstructors);
+    
+    function activateUser(userId) {
+        if (confirm('Are you sure you want to activate this instructor?')) {
+            // Implement activation logic here
+            console.log('Activating instructor:', userId);
+            alert('Instructor activation feature coming soon!');
+        }
+    }
+});
+</script>

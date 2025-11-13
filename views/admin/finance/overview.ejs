@@ -1,0 +1,551 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'finance';
+    title = 'Finance Overview - EduLMS';
+%>
+
+<style>
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .page-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.25rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border: none;
+        border-left: 4px solid var(--primary);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .stat-card.revenue { border-left-color: var(--success); }
+    .stat-card.pending { border-left-color: var(--warning); }
+    .stat-card.failed { border-left-color: var(--danger); }
+    .stat-card.total { border-left-color: var(--info); }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+    }
+    
+    .stat-card.revenue .stat-icon { background: var(--success); }
+    .stat-card.pending .stat-icon { background: var(--warning); }
+    .stat-card.failed .stat-icon { background: var(--danger); }
+    .stat-card.total .stat-icon { background: var(--info); }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 0.2rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    
+    .stat-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .stat-change.positive {
+        color: var(--success);
+    }
+    
+    .stat-change.negative {
+        color: var(--danger);
+    }
+    
+    .dashboard-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+    
+    .card-header {
+        background: #fff;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .recent-payments {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .payment-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid #e3e6f0;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-item:hover {
+        background: #f8f9fc;
+        border-color: var(--primary-light);
+    }
+    
+    .payment-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .payment-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .payment-icon.completed { background: var(--success); }
+    .payment-icon.pending { background: var(--warning); }
+    .payment-icon.failed { background: var(--danger); }
+    
+    .payment-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.85rem;
+    }
+    
+    .payment-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+    
+    .payment-amount {
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.9rem;
+    }
+    
+    .quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .quick-action {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--dark);
+        transition: all 0.3s;
+        border: 1px solid #e3e6f0;
+    }
+    
+    .quick-action:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+    
+    .quick-action:hover .action-icon {
+        background: white;
+        color: var(--primary);
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .action-content h6 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .action-content p {
+        margin: 0;
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin-top: 1rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-content {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Finance Overview</h1>
+    <p class="page-description">Monitor revenue, payments, and financial performance across the platform</p>
+</div>
+
+<!-- Financial Stats -->
+<div class="stats-grid">
+    <div class="stat-card revenue">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">
+                    KSh 
+                    <% if (typeof stats !== 'undefined' && stats.totalRevenue) { %>
+                        <%= stats.totalRevenue.toLocaleString() %>
+                    <% } else { %>
+                        0
+                    <% } %>
+                </div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+        </div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+15% this month</span>
+        </div>
+    </div>
+
+    <div class="stat-card pending">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">
+                    KSh 
+                    <% if (typeof stats !== 'undefined' && stats.pendingRevenue) { %>
+                        <%= stats.pendingRevenue.toLocaleString() %>
+                    <% } else { %>
+                        0
+                    <% } %>
+                </div>
+                <div class="stat-label">Pending Payments</div>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+        <div class="stat-change negative">
+            <i class="fas fa-arrow-down"></i>
+            <span>-5% this month</span>
+        </div>
+    </div>
+
+    <div class="stat-card failed">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">
+                    KSh 
+                    <% if (typeof stats !== 'undefined' && stats.failedRevenue) { %>
+                        <%= stats.failedRevenue.toLocaleString() %>
+                    <% } else { %>
+                        0
+                    <% } %>
+                </div>
+                <div class="stat-label">Failed Payments</div>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+        </div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+2% this month</span>
+        </div>
+    </div>
+
+    <div class="stat-card total">
+        <div class="stat-header">
+            <div>
+                <div class="stat-value">
+                    <% if (typeof stats !== 'undefined' && stats.totalPayments) { %>
+                        <%= stats.totalPayments.toLocaleString() %>
+                    <% } else { %>
+                        0
+                    <% } %>
+                </div>
+                <div class="stat-label">Total Transactions</div>
+            </div>
+            <div class="stat-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+        </div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+12% this month</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-content">
+    <div class="main-content">
+        <!-- Revenue Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Revenue Overview</h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary active">Monthly</button>
+                    <button class="btn btn-sm btn-outline-primary">Quarterly</button>
+                    <button class="btn btn-sm btn-outline-primary">Yearly</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <h5>Revenue Chart</h5>
+                        <p>Revenue analytics and charts will be displayed here</p>
+                        <small class="text-muted">Chart integration coming soon</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Payments</h5>
+                <a href="/admin/finance/payments" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="recent-payments">
+                    <div class="payment-item">
+                        <div class="payment-info">
+                            <div class="payment-icon completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="payment-details">
+                                <h6>John Doe - Course Fee</h6>
+                                <small>Completed • Today, 10:30 AM</small>
+                            </div>
+                        </div>
+                        <div class="payment-amount">KSh 15,000</div>
+                    </div>
+                    
+                    <div class="payment-item">
+                        <div class="payment-info">
+                            <div class="payment-icon pending">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="payment-details">
+                                <h6>Jane Smith - Registration</h6>
+                                <small>Pending • Today, 09:15 AM</small>
+                            </div>
+                        </div>
+                        <div class="payment-amount">KSh 5,000</div>
+                    </div>
+                    
+                    <div class="payment-item">
+                        <div class="payment-info">
+                            <div class="payment-icon completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="payment-details">
+                                <h6>Mike Johnson - Exam Fee</h6>
+                                <small>Completed • Yesterday, 03:45 PM</small>
+                            </div>
+                        </div>
+                        <div class="payment-amount">KSh 3,000</div>
+                    </div>
+                    
+                    <div class="payment-item">
+                        <div class="payment-info">
+                            <div class="payment-icon failed">
+                                <i class="fas fa-times"></i>
+                            </div>
+                            <div class="payment-details">
+                                <h6>Sarah Wilson - Course Material</h6>
+                                <small>Failed • Yesterday, 02:20 PM</small>
+                            </div>
+                        </div>
+                        <div class="payment-amount">KSh 2,500</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-content">
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="/admin/finance/fee-structure" class="quick-action">
+                        <div class="action-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="action-content">
+                            <h6>Fee Structure</h6>
+                            <p>Manage course fees and payment plans</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/admin/finance/payments" class="quick-action">
+                        <div class="action-icon">
+                            <i class="fas fa-money-check"></i>
+                        </div>
+                        <div class="action-content">
+                            <h6>Payment Records</h6>
+                            <p>View all payment transactions</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/admin/finance/revenue-reports" class="quick-action">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="action-content">
+                            <h6>Generate Reports</h6>
+                            <p>Create financial reports</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/admin/finance/invoices" class="quick-action">
+                        <div class="action-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="action-content">
+                            <h6>Invoice Management</h6>
+                            <p>Manage student invoices</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">This Month</h5>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid" style="grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="detail-item">
+                        <span class="detail-label">Revenue Collected</span>
+                        <span class="detail-value">KSh 245,800</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Pending Payments</span>
+                        <span class="detail-value">KSh 45,200</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Successful Transactions</span>
+                        <span class="detail-value">128</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Failed Transactions</span>
+                        <span class="detail-value">12</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

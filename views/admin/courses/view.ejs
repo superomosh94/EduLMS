@@ -1,0 +1,578 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'courses';
+    title = 'Course Details - EduLMS';
+%>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-outline-primary {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #dc3545;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .course-overview {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .course-sidebar {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .course-icon-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .course-code {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .course-status {
+        background: var(--success);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    
+    .course-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fc;
+        border-radius: 6px;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .stat-value {
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .course-details {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        padding: 2rem;
+    }
+    
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+    
+    .detail-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f8f9fc;
+    }
+    
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .detail-value {
+        font-size: 1rem;
+        color: var(--dark);
+        font-weight: 500;
+    }
+    
+    .empty-value {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .instructor-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+    }
+    
+    .instructor-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--info);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .course-tabs {
+        margin-top: 2rem;
+    }
+    
+    .tab-nav {
+        display: flex;
+        border-bottom: 1px solid #e3e6f0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-link {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        font-weight: 500;
+        color: #6c757d;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s;
+    }
+    
+    .tab-link.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .students-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .student-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+    
+    .student-item:hover {
+        background: #f8f9fc;
+        border-color: var(--primary-light);
+    }
+    
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .student-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .student-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+    
+    .enrollment-date {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .course-overview {
+            grid-template-columns: 1fr;
+        }
+        
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .tab-nav {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Course Details</h1>
+    <div class="header-actions">
+        <a href="/admin/courses/<%= course.id %>/edit" class="btn btn-primary">
+            <i class="fas fa-edit me-1"></i>
+            Edit Course
+        </a>
+        <a href="/admin/courses" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Courses
+        </a>
+    </div>
+</div>
+
+<div class="course-overview">
+    <div class="course-sidebar">
+        <div class="course-icon-large">
+            <%= course.course_code.substring(0, 2) %>
+        </div>
+        <div class="course-code"><%= course.course_code %></div>
+        <div class="course-status" style="background: <%= course.is_active ? 'var(--success)' : 'var(--secondary)' %>;">
+            <%= course.is_active ? 'Active' : 'Inactive' %>
+        </div>
+        <h3 class="course-name" style="margin: 1rem 0; color: var(--dark);"><%= course.course_name %></h3>
+        
+        <div class="course-stats">
+            <div class="stat-item">
+                <span class="stat-label">Enrolled Students</span>
+                <span class="stat-value">42/50</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Completion Rate</span>
+                <span class="stat-value">85%</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Average Grade</span>
+                <span class="stat-value">B+</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Course Fee</span>
+                <span class="stat-value">KES <%= (course.course_fee || 0).toLocaleString() %></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="course-details">
+        <div class="detail-section">
+            <h3 class="section-title">Course Information</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Course Code</span>
+                    <span class="detail-value"><%= course.course_code %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Course Name</span>
+                    <span class="detail-value"><%= course.course_name %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Department</span>
+                    <span class="detail-value">
+                        <%= course.department ? course.department.charAt(0).toUpperCase() + course.department.slice(1).replace('-', ' ') : '<span class="empty-value">Not specified</span>' %>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Credit Hours</span>
+                    <span class="detail-value"><%= course.credits || 3 %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Maximum Students</span>
+                    <span class="detail-value"><%= course.max_students || 50 %></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Course Fee</span>
+                    <span class="detail-value">KES <%= (course.course_fee || 0).toLocaleString() %></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3 class="section-title">Schedule & Duration</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Start Date</span>
+                    <span class="detail-value">
+                        <%= course.start_date ? new Date(course.start_date).toLocaleDateString() : '<span class="empty-value">Not set</span>' %>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">End Date</span>
+                    <span class="detail-value">
+                        <%= course.end_date ? new Date(course.end_date).toLocaleDateString() : '<span class="empty-value">Not set</span>' %>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Duration</span>
+                    <span class="detail-value">
+                        <% if (course.start_date && course.end_date) { %>
+                            <% 
+                                const start = new Date(course.start_date);
+                                const end = new Date(course.end_date);
+                                const diffTime = Math.abs(end - start);
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            %>
+                            <%= diffDays %> days
+                        <% } else { %>
+                            <span class="empty-value">Not specified</span>
+                        <% } %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3 class="section-title">Instructor</h3>
+            <% if (course.instructor_name) { %>
+                <div class="instructor-info">
+                    <div class="instructor-avatar">
+                        <%= course.instructor_name.split(' ').map(n => n[0]).join('').toUpperCase() %>
+                    </div>
+                    <div>
+                        <h6 style="margin: 0; color: var(--dark);"><%= course.instructor_name %></h6>
+                        <small style="color: #6c757d;">Instructor</small>
+                    </div>
+                </div>
+            <% } else { %>
+                <p class="empty-value">No instructor assigned to this course</p>
+            <% } %>
+        </div>
+
+        <% if (course.description) { %>
+            <div class="detail-section">
+                <h3 class="section-title">Course Description</h3>
+                <p style="color: var(--dark); line-height: 1.6;"><%= course.description %></p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<div class="course-tabs">
+    <div class="tab-nav">
+        <button class="tab-link active" data-tab="students">Enrolled Students (42)</button>
+        <button class="tab-link" data-tab="assignments">Assignments (8)</button>
+        <button class="tab-link" data-tab="grades">Grade Distribution</button>
+        <button class="tab-link" data-tab="analytics">Course Analytics</button>
+    </div>
+
+    <div class="tab-content active" id="students-tab">
+        <div class="students-list">
+            <!-- Sample student data - would come from backend -->
+            <div class="student-item">
+                <div class="student-info">
+                    <div class="student-avatar">JD</div>
+                    <div class="student-details">
+                        <h6>John Doe</h6>
+                        <small>STU2024001 • Computer Science</small>
+                    </div>
+                </div>
+                <div class="enrollment-date">Enrolled: Jan 15, 2024</div>
+            </div>
+            
+            <div class="student-item">
+                <div class="student-info">
+                    <div class="student-avatar">JS</div>
+                    <div class="student-details">
+                        <h6>Jane Smith</h6>
+                        <small>STU2024002 • Mathematics</small>
+                    </div>
+                </div>
+                <div class="enrollment-date">Enrolled: Jan 16, 2024</div>
+            </div>
+            
+            <div class="student-item">
+                <div class="student-info">
+                    <div class="student-avatar">MJ</div>
+                    <div class="student-details">
+                        <h6>Mike Johnson</h6>
+                        <small>STU2024003 • Physics</small>
+                    </div>
+                </div>
+                <div class="enrollment-date">Enrolled: Jan 18, 2024</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="assignments-tab">
+        <div class="empty-state">
+            <i class="fas fa-tasks"></i>
+            <h4>Assignment Management</h4>
+            <p>View and manage course assignments, submissions, and grading.</p>
+            <a href="/admin/academic/assignments?course=<%= course.id %>" class="btn btn-primary mt-2">
+                <i class="fas fa-external-link-alt me-1"></i>
+                Manage Assignments
+            </a>
+        </div>
+    </div>
+
+    <div class="tab-content" id="grades-tab">
+        <div class="empty-state">
+            <i class="fas fa-chart-bar"></i>
+            <h4>Grade Distribution</h4>
+            <p>View student performance analytics and grade distribution charts.</p>
+            <small class="text-muted">Grade analytics coming soon</small>
+        </div>
+    </div>
+
+    <div class="tab-content" id="analytics-tab">
+        <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <h4>Course Analytics</h4>
+            <p>Detailed analytics on student engagement, completion rates, and performance trends.</p>
+            <small class="text-muted">Advanced analytics coming soon</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Update active tab
+            tabLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show active content
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+});
+</script>

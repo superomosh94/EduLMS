@@ -1,30 +1,119 @@
 <% 
-  // Collect all flash messages from different variables
+  // Collect all flash messages from different variables with priority
   const allMessages = [];
   
-  // Check success messages
-  if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) {
-    success_msg.forEach(msg => allMessages.push({ type: 'success', text: msg }));
+  // Check new consistent flash message keys (success, error, warning, info)
+  if (typeof success !== 'undefined' && success && success.length > 0) {
+    success.forEach(msg => allMessages.push({ type: 'success', text: msg, icon: 'check-circle' }));
   }
   
-  // Check error messages  
-  if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) {
-    error_msg.forEach(msg => allMessages.push({ type: 'danger', text: msg }));
-  }
-  
-  // Check generic error messages
   if (typeof error !== 'undefined' && error && error.length > 0) {
-    error.forEach(msg => allMessages.push({ type: 'danger', text: msg }));
+    error.forEach(msg => allMessages.push({ type: 'danger', text: msg, icon: 'exclamation-circle' }));
+  }
+  
+  if (typeof warning !== 'undefined' && warning && warning.length > 0) {
+    warning.forEach(msg => allMessages.push({ type: 'warning', text: msg, icon: 'exclamation-triangle' }));
+  }
+  
+  if (typeof info !== 'undefined' && info && info.length > 0) {
+    info.forEach(msg => allMessages.push({ type: 'info', text: msg, icon: 'info-circle' }));
+  }
+  
+  // Check legacy flash message keys for backward compatibility
+  if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) {
+    success_msg.forEach(msg => allMessages.push({ type: 'success', text: msg, icon: 'check-circle' }));
+  }
+  
+  if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) {
+    error_msg.forEach(msg => allMessages.push({ type: 'danger', text: msg, icon: 'exclamation-circle' }));
   }
 %>
 
 <% if (allMessages.length > 0) { %>
-    <div class="flash-messages-container">
+    <div class="flash-messages-container position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 9999; min-width: 400px; max-width: 90vw;">
         <% allMessages.forEach(message => { %>
-            <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
-                <%= message.text %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-<%= message.type %> alert-dismissible fade show shadow-lg mb-2" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-<%= message.icon %> me-2"></i>
+                    <div class="flex-grow-1">
+                        <%= message.text %>
+                    </div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         <% }); %>
     </div>
+
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert.parentElement) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            });
+            
+            // Add smooth entrance animation
+            alerts.forEach((alert, index) => {
+                alert.style.transform = 'translateY(-20px)';
+                alert.style.opacity = '0';
+                setTimeout(() => {
+                    alert.style.transition = 'all 0.3s ease';
+                    alert.style.transform = 'translateY(0)';
+                    alert.style.opacity = '1';
+                }, index * 100);
+            });
+        });
+    </script>
+
+    <style>
+        .flash-messages-container {
+            animation: slideInDown 0.5s ease;
+        }
+        
+        .alert {
+            border: none;
+            border-left: 4px solid;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .alert-success {
+            border-left-color: #198754;
+            background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%);
+        }
+        
+        .alert-danger {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fadbd8 0%, #f5b7b1 100%);
+        }
+        
+        .alert-warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fdebd0 0%, #fad7a0 100%);
+        }
+        
+        .alert-info {
+            border-left-color: #0dcaf0;
+            background: linear-gradient(135deg, #d1ecf1 0%, #aed6f1 100%);
+        }
+        
+        .btn-close:focus {
+            box-shadow: none;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translate3d(0, -100%, 0);
+                opacity: 0;
+            }
+            to {
+                transform: translate3d(0, 0, 0);
+                opacity: 1;
+            }
+        }
+    </style>
 <% } %>

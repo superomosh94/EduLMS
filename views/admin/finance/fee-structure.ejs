@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <%- include('../../partials/admin-header') %>
+</head>
+<body class="admin-layout">
+    <%- include('../../partials/admin-sidebar') %>
+    
+    
+    <main class="admin-main">
+        <%- include('../../partials/header') %>
+
+        
+        <div class="admin-content">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">Fee Structure Management</h1>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Fee Structure
+                    </button>
+                </div>
+
+                <% if (feeStructures && feeStructures.length > 0) { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Academic Year</th>
+                                            <th>Semester</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Created By</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% feeStructures.forEach(fee => { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold"><%= fee.name %></div>
+                                                    <small class="text-muted"><%= fee.description %></small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info text-capitalize"><%= fee.fee_type %></span>
+                                                </td>
+                                                <td class="fw-bold text-success">
+                                                    KES <%= parseFloat(fee.amount || 0).toLocaleString() %>
+                                                </td>
+                                                <td><%= fee.academic_year || 'N/A' %></td>
+                                                <td class="text-capitalize"><%= fee.semester || 'N/A' %></td>
+                                                <td><%= fee.due_date ? new Date(fee.due_date).toLocaleDateString() : 'N/A' %></td>
+                                                <td>
+                                                    <span class="badge <%= fee.is_active ? 'bg-success' : 'bg-secondary' %>">
+                                                        <%= fee.is_active ? 'Active' : 'Inactive' %>
+                                                    </span>
+                                                </td>
+                                                <td><%= fee.created_by_name || 'System' %></td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Fee Structures</h5>
+                            <p class="text-muted">No fee structures have been created yet.</p>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Fee Structure
+                            </button>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

@@ -1,190 +1,462 @@
-<aside class="admin-sidebar bg-dark">
+<aside class="admin-sidebar">
     <div class="sidebar-header text-center py-4">
-        <h5 class="text-white mb-0">Admin Panel</h5>
+        <div class="logo-container mb-3">
+            <div class="logo-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+        </div>
+        <h5 class="brand-name mb-1">EduLMS Pro</h5>
+        <small class="brand-subtitle">Education Platform</small>
     </div>
     
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    Dashboard
-                </a>
-            </li>
-            
-            <li class="nav-section">User Management</li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'users' ? 'active' : '' %>" href="/admin/users">
-                    <i class="fas fa-users me-2"></i>
-                    All Users
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'students' ? 'active' : '' %>" href="/admin/users/students">
-                    <i class="fas fa-user-graduate me-2"></i>
-                    Students
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'instructors' ? 'active' : '' %>" href="/admin/users/instructors">
-                    <i class="fas fa-chalkboard-teacher me-2"></i>
-                    Instructors
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/users/finance-officers">
-                    <i class="fas fa-money-check me-2"></i>
-                    Finance Officers
-                </a>
-            </li>
-            
-            <li class="nav-section">Academic</li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'courses' ? 'active' : '' %>" href="/admin/courses">
-                    <i class="fas fa-book me-2"></i>
-                    Courses
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'enrollments' ? 'active' : '' %>" href="/admin/enrollments">
-                    <i class="fas fa-clipboard-list me-2"></i>
-                    Enrollments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'assignments' ? 'active' : '' %>" href="/admin/assignments">
-                    <i class="fas fa-tasks me-2"></i>
-                    Assignments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'grades' ? 'active' : '' %>" href="/admin/grades">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Grades Overview
-                </a>
-            </li>
-            
-            <li class="nav-section">Finance</li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/finance">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Financial Overview
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'payments' ? 'active' : '' %>" href="/admin/finance/payments">
-                    <i class="fas fa-credit-card me-2"></i>
-                    Payments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'fees' ? 'active' : '' %>" href="/admin/finance/fees-structure">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>
-                    Fee Structure
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/finance/revenue-reports">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    Revenue Reports
-                </a>
-            </li>
-            
-            <li class="nav-section">System</li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'settings' ? 'active' : '' %>" href="/admin/system/settings">
-                    <i class="fas fa-cog me-2"></i>
-                    System Settings
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'notifications' ? 'active' : '' %>" href="/admin/system/notifications">
-                    <i class="fas fa-bell me-2"></i>
-                    Notifications
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'audit' ? 'active' : '' %>" href="/admin/system/audit-logs">
-                    <i class="fas fa-clipboard-check me-2"></i>
-                    Audit Logs
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'backup' ? 'active' : '' %>" href="/admin/system/backup">
-                    <i class="fas fa-database me-2"></i>
-                    Backup & Restore
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= currentPage === 'health' ? 'active' : '' %>" href="/admin/system/system-health">
-                    <i class="fas fa-heartbeat me-2"></i>
-                    System Health
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <div class="sidebar-content">
+        <nav class="sidebar-nav">
+            <ul class="nav flex-column">
+                <!-- Dashboard -->
+                <li class="nav-item">
+                    <a class="nav-link dashboard-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
+                        <div class="nav-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                
+                <!-- User Management -->
+                <li class="nav-section">
+                    <span>User Management</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link users-link <%= currentPage === 'users' ? 'active' : '' %>" href="/admin/users">
+                        <div class="nav-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="nav-text">All Users</span>
+                        <span class="nav-badge">45</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link students-link <%= currentPage === 'students' ? 'active' : '' %>" href="/admin/users/students">
+                        <div class="nav-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <span class="nav-text">Students</span>
+                        <span class="nav-badge">32</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link instructors-link <%= currentPage === 'instructors' ? 'active' : '' %>" href="/admin/users/instructors">
+                        <div class="nav-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <span class="nav-text">Instructors</span>
+                        <span class="nav-badge">8</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link finance-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/users/finance-officers">
+                        <div class="nav-icon">
+                            <i class="fas fa-money-check"></i>
+                        </div>
+                        <span class="nav-text">Finance Officers</span>
+                        <span class="nav-badge">5</span>
+                    </a>
+                </li>
+                
+                <!-- Academic -->
+                <li class="nav-section">
+                    <span>Academic</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link courses-link <%= currentPage === 'courses' ? 'active' : '' %>" href="/admin/courses">
+                        <div class="nav-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <span class="nav-text">Courses</span>
+                        <span class="nav-badge">12</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link enrollments-link <%= currentPage === 'academic' ? 'active' : '' %>" href="/admin/enrollments">
+                        <div class="nav-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <span class="nav-text">Enrollments</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link assignments-link <%= currentPage === 'academic' ? 'active' : '' %>" href="/admin/assignments">
+                        <div class="nav-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <span class="nav-text">Assignments</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link grades-link <%= currentPage === 'academic' ? 'active' : '' %>" href="/admin/grades">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <span class="nav-text">Grades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link submissions-link <%= currentPage === 'academic' ? 'active' : '' %>" href="/admin/submissions">
+                        <div class="nav-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <span class="nav-text">Submissions</span>
+                    </a>
+                </li>
+                
+                <!-- Finance -->
+                <li class="nav-section">
+                    <span>Finance</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link finance-overview-link <%= currentPage === 'finance' ? 'active' : '' %>" href="/admin/finance/overview">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="nav-text">Financial Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link payments-link <%= currentPage === 'payments' ? 'active' : '' %>" href="/admin/finance/payments">
+                        <div class="nav-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <span class="nav-text">Payments</span>
+                        <span class="nav-badge new">24</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fees-link <%= currentPage === 'fees' ? 'active' : '' %>" href="/admin/finance/fee-structure">
+                        <div class="nav-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span class="nav-text">Fee Structure</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link revenue-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/finance/revenue-reports">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <span class="nav-text">Revenue Reports</span>
+                    </a>
+                </li>
+                
+                <!-- System -->
+                <li class="nav-section">
+                    <span>System</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link settings-link <%= currentPage === 'settings' ? 'active' : '' %>" href="/admin/system/settings">
+                        <div class="nav-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <span class="nav-text">System Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link notifications-link <%= currentPage === 'notifications' ? 'active' : '' %>" href="/admin/system/notifications">
+                        <div class="nav-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <span class="nav-text">Notifications</span>
+                        <span class="nav-badge alert">3</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link audit-link <%= currentPage === 'audit' ? 'active' : '' %>" href="/admin/system/audit-logs">
+                        <div class="nav-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <span class="nav-text">Audit Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link backup-link <%= currentPage === 'backup' ? 'active' : '' %>" href="/admin/system/backup">
+                        <div class="nav-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <span class="nav-text">Backup & Restore</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link health-link <%= currentPage === 'health' ? 'active' : '' %>" href="/admin/system/system-health">
+                        <div class="nav-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <span class="nav-text">System Health</span>
+                    </a>
+                </li>
+
+                <!-- Reports -->
+                <li class="nav-section">
+                    <span>Reports</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link generate-reports-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/reports/generate">
+                        <div class="nav-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span class="nav-text">Generate Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link student-reports-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/reports/student-reports">
+                        <div class="nav-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <span class="nav-text">Student Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link financial-reports-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/reports/financial-reports">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="nav-text">Financial Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link academic-reports-link <%= currentPage === 'reports' ? 'active' : '' %>" href="/admin/reports/academic-reports">
+                        <div class="nav-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <span class="nav-text">Academic Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
     
-    <div class="sidebar-footer mt-auto p-3">
-        <div class="system-status">
-            <div class="status-indicator online"></div>
-            <small class="text-light">System Online</small>
+    <div class="sidebar-footer">
+        <div class="system-status-card">
+            <div class="status-header">
+                <div class="status-indicator online"></div>
+                <span class="status-title">System Online</span>
+            </div>
+            <div class="status-metrics">
+                <div class="metric">
+                    <span class="metric-value">99.9%</span>
+                    <span class="metric-label">Uptime</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">2.4s</span>
+                    <span class="metric-label">Response</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-profile-card">
+            <div class="user-avatar">
+                <div class="avatar-image">
+                    <%= currentUser && currentUser.initials ? currentUser.initials : 'AU' %>
+                </div>
+                <div class="online-dot"></div>
+            </div>
+            <div class="user-info">
+                <div class="user-name"><%= currentUser && currentUser.name ? currentUser.name : 'Admin User' %></div>
+                <div class="user-role">System Administrator</div>
+            </div>
         </div>
     </div>
 </aside>
 
 <style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --sidebar-bg: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.9);
+    --text-muted: rgba(255, 255, 255, 0.7);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .admin-sidebar {
-    width: 250px;
-    min-height: 100vh;
+    width: 280px;
+    height: 100vh;
     position: fixed;
     left: 0;
     top: 0;
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    background: var(--sidebar-bg);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-header {
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    padding: 1.5rem 1rem;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.logo-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.brand-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.brand-subtitle {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 0;
+}
+
+.sidebar-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 2px;
+}
+
+.sidebar-nav {
+    padding: 0 0.75rem;
 }
 
 .nav-section {
-    padding: 0.75rem 1rem;
-    color: #6c757d;
+    padding: 1rem 0.75rem 0.5rem;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
 }
 
 .sidebar-nav .nav-link {
-    color: #b1b1b1;
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
     padding: 0.75rem 1rem;
-    border-left: 3px solid transparent;
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    text-decoration: none;
+    margin: 0.25rem 0;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
 }
 
 .sidebar-nav .nav-link:hover {
-    color: #fff;
-    background-color: rgba(255,255,255,0.1);
-    border-left-color: #007bff;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
 }
 
 .sidebar-nav .nav-link.active {
-    color: #fff;
-    background-color: rgba(0,123,255,0.2);
-    border-left-color: #007bff;
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.sidebar-nav .nav-link i {
-    width: 20px;
+.nav-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+.sidebar-nav .nav-link.active .nav-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.nav-text {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.nav-badge {
+    background: var(--success-gradient);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 20px;
     text-align: center;
 }
 
-.system-status {
+.nav-badge.new {
+    background: var(--secondary-gradient);
+}
+
+.nav-badge.alert {
+    background: var(--warning-gradient);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    background: rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    padding: 1rem;
+}
+
+.system-status-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.status-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .status-indicator {
@@ -194,13 +466,108 @@
 }
 
 .status-indicator.online {
-    background-color: #28a745;
-    animation: pulse 2s infinite;
+    background: var(--success-gradient);
 }
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+.status-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.status-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.metric {
+    text-align: center;
+}
+
+.metric-value {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.metric-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    margin-top: 0.1rem;
+}
+
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.user-avatar {
+    position: relative;
+}
+
+.avatar-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.online-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background: var(--success-gradient);
+    border: 2px solid var(--sidebar-bg);
+    border-radius: 50%;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.1rem;
+}
+
+.user-role {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .admin-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+}
+
+/* Focus states for accessibility */
+.sidebar-nav .nav-link:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
 }
 </style>

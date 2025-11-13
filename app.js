@@ -193,7 +193,7 @@ app.get('/health', async (req, res) => {
 const testDatabaseConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Connected to database as id ' + connection.threadId);
+    console.log(' Connected to database as id ' + connection.threadId);
     connection.release();
     
     // Perform initial health check
@@ -246,7 +246,7 @@ const safeRequireRoute = (routePath, routeName) => {
     if (typeof route !== 'function' && typeof route !== 'object') {
       throw new Error(`Route ${routeName} did not export a valid router`);
     }
-    console.log(`✅ ${routeName} routes loaded`);
+    // console.log(`✅ ${routeName} routes loaded`);
     return route;
   } catch (error) {
     console.error(`❌ ${routeName} routes failed:`, error.message);
@@ -339,17 +339,19 @@ const startServer = async (port) => {
     await testDatabaseConnection();
     
     const server = app.listen(port, () => {
-      console.log(`
-🚀 EduLMS Server Started Successfully!
-----------------------------------------
-🌍 Environment: ${process.env.NODE_ENV || 'development'}
-📚 Application: ${process.env.SITE_NAME || 'EduLMS'}
-🔗 URL: http://localhost:${port}
-📊 Version: ${process.env.APP_VERSION || '1.0.0'}
-⏰ Started: ${new Date().toLocaleString()}
-💾 Database: Connected
-----------------------------------------
-      `);
+//       console.log(`
+// 🚀 EduLMS Server Started Successfully!
+// ----------------------------------------
+// 🌍 Environment: ${process.env.NODE_ENV || 'development'}
+// 📚 Application: ${process.env.SITE_NAME || 'EduLMS'}
+// 🔗 URL: http://localhost:${port}
+// 📊 Version: ${process.env.APP_VERSION || '1.0.0'}
+// ⏰ Started: ${new Date().toLocaleString()}
+// 💾 Database: Connected
+// ----------------------------------------
+//       `);
+      console.log(` Application: ${process.env.SITE_NAME || 'EduLMS'}
+ URL: http://localhost:${port}`)
     });
 
     server.on('error', (err) => {

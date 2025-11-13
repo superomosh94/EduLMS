@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <%- include('../../partials/head') %>
+</head>
+<body class="admin-layout">
+    <%- include('../partials/sidebar') %>
+    
+    <main class="admin-main">
+        <%- include('../partials/header') %>
+        
+        <div class="admin-content">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">Grade Management</h1>
+                </div>
+
+                <% if (grades && grades.length > 0) { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Assignment</th>
+                                            <th>Course</th>
+                                            <th>Points Earned</th>
+                                            <th>Max Points</th>
+                                            <th>Grade</th>
+                                            <th>Graded By</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% grades.forEach(grade => { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                            <span class="text-white fw-bold"><%= grade.student_name ? grade.student_name.charAt(0).toUpperCase() : 'S' %></span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-semibold"><%= grade.student_name || 'N/A' %></div>
+                                                            <small class="text-muted"><%= grade.student_id || '' %></small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><%= grade.assignment_title || 'N/A' %></td>
+                                                <td><%= grade.course_name || 'N/A' %></td>
+                                                <td>
+                                                    <span class="badge bg-primary"><%= grade.points_earned || '0' %></span>
+                                                </td>
+                                                <td><%= grade.max_points || '100' %></td>
+                                                <td>
+                                                    <span class="badge bg-success"><%= grade.grade || 'N/A' %></span>
+                                                </td>
+                                                <td><%= grade.graded_by || 'N/A' %></td>
+                                                <td><%= grade.graded_at ? new Date(grade.graded_at).toLocaleDateString() : 'N/A' %></td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Grades Found</h5>
+                            <p class="text-muted">There are no grades recorded in the system yet.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../../partials/scripts') %>
+</body>
+</html>

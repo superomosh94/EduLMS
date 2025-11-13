@@ -1,0 +1,373 @@
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- jQuery (optional, for easier DOM manipulation) -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+<!-- DataTables (for enhanced tables) -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Chart.js (for analytics and charts) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- SweetAlert2 (for beautiful alerts) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Custom Admin JavaScript -->
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize popovers
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl);
+        });
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Initialize DataTables on tables with the 'datatable' class
+        if ($.fn.DataTable) {
+            $('.datatable').DataTable({
+                "pageLength": 25,
+                "responsive": true,
+                "language": {
+                    "search": "_INPUT_",
+                    "searchPlaceholder": "Search...",
+                    "lengthMenu": "Show _MENU_ entries",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                    "infoEmpty": "Showing 0 to 0 of 0 entries",
+                    "infoFiltered": "(filtered from _MAX_ total entries)",
+                    "paginate": {
+                        "first": "First",
+                        "last": "Last",
+                        "next": "Next",
+                        "previous": "Previous"
+                    }
+                }
+            });
+        }
+
+        // Sidebar active state management
+        const currentPath = window.location.pathname;
+        const sidebarLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+        
+        sidebarLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && currentPath.startsWith(href) && href !== '/admin/dashboard') {
+                link.classList.add('active');
+            }
+        });
+
+        // Confirm deletion dialogs
+        document.querySelectorAll('form[action*="/delete"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Bulk actions functionality
+        const bulkActionSelect = document.getElementById('bulkAction');
+        const bulkActionBtn = document.getElementById('bulkActionBtn');
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+
+        if (bulkActionSelect && bulkActionBtn) {
+            bulkActionBtn.addEventListener('click', function() {
+                const selectedItems = Array.from(itemCheckboxes).filter(cb => cb.checked);
+                const action = bulkActionSelect.value;
+
+                if (selectedItems.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No items selected',
+                        text: 'Please select at least one item to perform bulk actions.'
+                    });
+                    return;
+                }
+
+                if (action === 'delete') {
+                    Swal.fire({
+                        title: 'Confirm Bulk Delete',
+                        text: `Are you sure you want to delete ${selectedItems.length} item(s)? This action cannot be undone.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete them!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Perform bulk delete
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/admin/users/bulk-delete';
+
+                            selectedItems.forEach(checkbox => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'userIds';
+                                input.value = checkbox.value;
+                                form.appendChild(input);
+                            });
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                }
+            });
+        }
+
+        // Toggle all checkboxes
+        const toggleAllCheckbox = document.getElementById('toggleAll');
+        if (toggleAllCheckbox) {
+            toggleAllCheckbox.addEventListener('change', function() {
+                itemCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        // Real-time search functionality
+        const searchInput = document.getElementById('tableSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('#usersTable tbody tr');
+
+                tableRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        // Status toggle buttons
+        document.querySelectorAll('.status-toggle').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.dataset.userId;
+                const currentStatus = this.dataset.status;
+                const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+
+                fetch(`/admin/users/${userId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update button appearance
+                        this.dataset.status = newStatus;
+                        this.classList.toggle('btn-success');
+                        this.classList.toggle('btn-secondary');
+                        this.innerHTML = newStatus === 'active' ? 
+                            '<i class="fas fa-check-circle"></i> Active' : 
+                            '<i class="fas fa-times-circle"></i> Inactive';
+
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Status Updated',
+                            text: `User status changed to ${newStatus}`,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to update user status'
+                    });
+                });
+            });
+        });
+
+        // Auto-save forms
+        document.querySelectorAll('.auto-save').forEach(form => {
+            let saveTimeout;
+            
+            form.addEventListener('input', function() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    const formData = new FormData(this);
+                    
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show auto-save indicator
+                            const indicator = document.createElement('div');
+                            indicator.className = 'alert alert-success alert-dismissible fade show';
+                            indicator.innerHTML = `
+                                <i class="fas fa-check"></i> Changes saved automatically
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            `;
+                            document.querySelector('.admin-content').prepend(indicator);
+                            
+                            setTimeout(() => {
+                                indicator.remove();
+                            }, 3000);
+                        }
+                    });
+                }, 1000); // Save after 1 second of inactivity
+            });
+        });
+
+        // File upload preview
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const preview = document.getElementById(this.id + 'Preview');
+                    if (preview) {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                preview.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" style="max-height: 200px;">`;
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            preview.innerHTML = `<div class="alert alert-info">File: ${file.name}</div>`;
+                        }
+                    }
+                }
+            });
+        });
+
+        // Password strength indicator
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                const strengthIndicator = document.getElementById('passwordStrength');
+                const password = this.value;
+                let strength = 0;
+
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Z\d]/)) strength++;
+
+                const strengthText = ['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
+                const strengthClass = ['danger', 'warning', 'info', 'success', 'success'];
+                
+                if (strengthIndicator) {
+                    strengthIndicator.textContent = strengthText[strength];
+                    strengthIndicator.className = `badge bg-${strengthClass[strength]}`;
+                }
+            });
+        }
+
+        // System health monitoring
+        function checkSystemHealth() {
+            fetch('/admin/system/health-check')
+                .then(response => response.json())
+                .then(data => {
+                    const healthIndicator = document.querySelector('.status-indicator');
+                    if (healthIndicator) {
+                        if (data.status === 'healthy') {
+                            healthIndicator.className = 'status-indicator online';
+                            healthIndicator.title = 'System Healthy';
+                        } else {
+                            healthIndicator.className = 'status-indicator offline';
+                            healthIndicator.title = 'System Issues Detected';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Health check failed:', error);
+                });
+        }
+
+        // Check system health every 30 seconds
+        setInterval(checkSystemHealth, 30000);
+    });
+
+    // Utility functions
+    const AdminUtils = {
+        // Format date
+        formatDate: (dateString) => {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        },
+
+        // Format currency
+        formatCurrency: (amount) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        },
+
+        // Copy to clipboard
+        copyToClipboard: (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'Text copied to clipboard',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+        },
+
+        // Export table to CSV
+        exportToCSV: (tableId, filename) => {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tr');
+            const csv = [];
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
+                    data = data.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                
+                csv.push(row.join(','));
+            }
+
+            const csvString = csv.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename + '.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    };
+
+    // Make utils globally available
+    window.AdminUtils = AdminUtils;
+</script>

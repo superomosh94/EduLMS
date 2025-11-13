@@ -1,200 +1,449 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'User Management - EduLMS' %></title>
-    <style>
-        :root {
-            --primary-blue: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        
-        .page-title {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: var(--gray-900);
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            background: var(--primary-blue);
-            color: white;
-            text-decoration: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .users-table {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            overflow: hidden;
-        }
-        
-        .table-header {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-            padding: 1rem 1.5rem;
-            background: var(--gray-50);
-            border-bottom: 1px solid var(--gray-200);
-            font-weight: 600;
-            color: var(--gray-700);
-        }
-        
-        .user-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-            align-items: center;
-        }
-        
-        .user-row:hover {
-            background: var(--gray-50);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .user-avatar {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 50%;
-            background: var(--primary-blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-        
-        .user-details h4 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-        
-        .user-details p {
-            margin: 0;
-            color: var(--gray-500);
-            font-size: 0.875rem;
-        }
-        
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .status-active {
-            background: #dcfce7;
-            color: #166534;
-        }
-        
-        .status-inactive {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .role-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-        
-        .no-users {
-            text-align: center;
-            padding: 3rem;
-            color: var(--gray-500);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">User Management</h1>
-            <a href="/admin/users/create" class="btn">+ Add User</a>
-        </div>
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'users';
+    title = 'User Management - EduLMS';
+%>
 
-        <div class="users-table">
-            <div class="table-header">
-                <div>User</div>
-                <div>Role</div>
-                <div>Status</div>
-                <div>Joined</div>
-                <div>Actions</div>
-            </div>
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-outline-primary {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+    
+    .card-header {
+        background: #fff;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .filters {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        background: #fff;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        background: #f8f9fc;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.875rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e3e6f0;
+        font-size: 0.875rem;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .user-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+    
+    .badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background: var(--success);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: var(--warning);
+        color: white;
+    }
+    
+    .badge-danger {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .badge-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .badge-info {
+        background: var(--info);
+        color: white;
+    }
+    
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+    
+    .btn-success {
+        background: var(--success);
+        color: white;
+        border: none;
+    }
+    
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+        border: none;
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+        border: none;
+    }
+    
+    .btn-info {
+        background: var(--info);
+        color: white;
+        border: none;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .page-link {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 4px;
+        color: var(--primary);
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    
+    .page-link:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .page-item.active .page-link {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background: #f8f9fc;
+    }
+</style>
 
-            <% if (typeof users !== 'undefined' && users.length > 0) { %>
-                <% users.forEach(user => { %>
-                <div class="user-row">
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <%= user.initials || 'U' %>
-                        </div>
-                        <div class="user-details">
-                            <h4><%= user.name || 'Unknown User' %></h4>
-                            <p><%= user.email || 'No email' %></p>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="role-badge"><%= user.role || 'user' %></span>
-                    </div>
-                    <div>
-                        <span class="status-badge <%= user.is_active ? 'status-active' : 'status-inactive' %>">
-                            <%= user.is_active ? 'Active' : 'Inactive' %>
-                        </span>
-                    </div>
-                    <div>
-                        <%= user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown' %>
-                    </div>
-                    <div>
-                        <a href="/admin/users/<%= user.id %>" style="color: var(--primary-blue); text-decoration: none;">View</a>
-                    </div>
-                </div>
-                <% }); %>
-            <% } else { %>
-                <div class="no-users">
-                    <p>No users found</p>
-                </div>
-            <% } %>
+<div class="page-header">
+    <h1 class="page-title">User Management</h1>
+    <div class="header-actions">
+        <a href="/admin/users/create" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i>
+            Add New User
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">All Users</h5>
+        <div class="filters">
+            <select id="roleFilter" class="form-select">
+                <option value="">All Roles</option>
+                <option value="student">Students</option>
+                <option value="instructor">Instructors</option>
+                <option value="finance">Finance Officers</option>
+                <option value="admin">Admins</option>
+            </select>
+            <input type="text" id="searchUsers" class="form-control" placeholder="Search users...">
         </div>
     </div>
-</body>
-</html>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (users && users.length > 0) { %>
+                        <% users.forEach(user => { %>
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            <%= user.initials %>
+                                        </div>
+                                        <div class="user-details">
+                                            <h6><%= user.name %></h6>
+                                            <small>
+                                                <% if (user.student_id) { %>
+                                                    ID: <%= user.student_id %>
+                                                <% } else if (user.teacher_id) { %>
+                                                    ID: <%= user.teacher_id %>
+                                                <% } else if (user.employee_id) { %>
+                                                    ID: <%= user.employee_id %>
+                                                <% } else { %>
+                                                    ID: <%= user.id %>
+                                                <% } %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><%= user.email %></td>
+                                <td>
+                                    <span class="badge badge-<%= user.role === 'admin' ? 'danger' : user.role === 'instructor' ? 'info' : user.role === 'finance' ? 'warning' : 'primary' %>">
+                                        <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-<%= user.is_active ? 'success' : 'secondary' %>">
+                                        <%= user.is_active ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A' %>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/users/<%= user.id %>" class="btn btn-sm btn-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/admin/users/<%= user.id %>/edit" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <% if (user.is_active) { %>
+                                            <form action="/admin/users/<%= user.id %>/delete" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this user?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <button class="btn btn-sm btn-success" title="Activate" onclick="activateUser(<%= user.id %>)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                                No users found
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <% if (pagination && pagination.total > 1) { %>
+            <div class="pagination">
+                <% if (pagination.current > 1) { %>
+                    <a href="<%= pagination.baseUrl %>?page=<%= pagination.current - 1 %>" class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                <% } %>
+                
+                <% pagination.pages.forEach(page => { %>
+                    <% if (page.isCurrent) { %>
+                        <span class="page-link active"><%= page.number %></span>
+                    <% } else { %>
+                        <a href="<%= page.url %>" class="page-link"><%= page.number %></a>
+                    <% } %>
+                <% }) %>
+                
+                <% if (pagination.current < pagination.total) { %>
+                    <a href="<%= pagination.baseUrl %>?page=<%= pagination.current + 1 %>" class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleFilter = document.getElementById('roleFilter');
+    const searchInput = document.getElementById('searchUsers');
+    
+    function filterUsers() {
+        const role = roleFilter.value.toLowerCase();
+        const search = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+        
+        rows.forEach(row => {
+            const roleCell = row.cells[2].textContent.toLowerCase();
+            const nameCell = row.cells[0].textContent.toLowerCase();
+            const emailCell = row.cells[1].textContent.toLowerCase();
+            
+            const roleMatch = !role || roleCell.includes(role);
+            const searchMatch = !search || 
+                nameCell.includes(search) || 
+                emailCell.includes(search);
+            
+            row.style.display = roleMatch && searchMatch ? '' : 'none';
+        });
+    }
+    
+    roleFilter.addEventListener('change', filterUsers);
+    searchInput.addEventListener('input', filterUsers);
+    
+    function activateUser(userId) {
+        if (confirm('Are you sure you want to activate this user?')) {
+            // Implement activation logic here
+            console.log('Activating user:', userId);
+        }
+    }
+});
+</script>

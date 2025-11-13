@@ -1,0 +1,512 @@
+<% 
+    layout = 'layouts/admin-layout';
+    currentPage = 'courses';
+    title = 'Edit Course - EduLMS';
+%>
+
+<style>
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .breadcrumb {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        border: none;
+        margin-bottom: 1.25rem;
+    }
+    
+    .card-header {
+        background: #fff;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .course-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    .course-subtitle {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 0.875rem;
+    }
+    
+    .form-control, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        background: #fff;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 1px solid #d1d3e2;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 0.875rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #dc3545;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .tips {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .tip-item {
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 6px;
+        border-left: 4px solid var(--info);
+    }
+    
+    .tip-item strong {
+        color: var(--dark);
+        font-size: 0.875rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .tip-item p {
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .course-stats {
+        background: #f8f9fc;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .course-stats h6 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .stat-value {
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    .readonly-field {
+        background: #f8f9fc;
+        border-color: #e3e6f0;
+        color: #6c757d;
+    }
+    
+    @media (max-width: 768px) {
+        .row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Edit Course</h1>
+    <div class="breadcrumb">
+        <a href="/admin/dashboard">Home</a> / 
+        <a href="/admin/courses">Courses</a> / 
+        <a href="/admin/courses/<%= course.id %>"><%= course.course_code %></a> / 
+        <span>Edit</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="course-icon">
+                    <%= course.course_code.substring(0, 2) %>
+                </div>
+                <div>
+                    <h5 class="card-title"><%= course.course_name %></h5>
+                    <p class="course-subtitle">
+                        <%= course.course_code %> • 
+                        <%= course.instructor_name || 'No Instructor Assigned' %>
+                    </p>
+                </div>
+            </div>
+            <div class="card-body">
+                <form action="/admin/courses/<%= course.id %>/edit" method="POST" id="editCourseForm">
+                    <div class="form-group">
+                        <label for="courseCode" class="form-label">Course Code</label>
+                        <input type="text" id="courseCode" name="courseCode" class="form-control readonly-field" 
+                               value="<%= course.course_code %>" readonly>
+                        <small class="form-text">Course code cannot be changed after creation</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseName" class="form-label">Course Name *</label>
+                        <input type="text" id="courseName" name="courseName" class="form-control" required 
+                               value="<%= course.course_name %>">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department" class="form-label">Department</label>
+                            <select id="department" name="department" class="form-select">
+                                <option value="">Select Department</option>
+                                <option value="computer-science" <%= course.department === 'computer-science' ? 'selected' : '' %>>Computer Science</option>
+                                <option value="mathematics" <%= course.department === 'mathematics' ? 'selected' : '' %>>Mathematics</option>
+                                <option value="physics" <%= course.department === 'physics' ? 'selected' : '' %>>Physics</option>
+                                <option value="chemistry" <%= course.department === 'chemistry' ? 'selected' : '' %>>Chemistry</option>
+                                <option value="biology" <%= course.department === 'biology' ? 'selected' : '' %>>Biology</option>
+                                <option value="business" <%= course.department === 'business' ? 'selected' : '' %>>Business</option>
+                                <option value="engineering" <%= course.department === 'engineering' ? 'selected' : '' %>>Engineering</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="credits" class="form-label">Credit Hours</label>
+                            <input type="number" id="credits" name="credits" class="form-control" 
+                                   min="1" max="10" value="<%= course.credits || 3 %>">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instructor" class="form-label">Instructor</label>
+                        <select id="instructor" name="instructor_id" class="form-select">
+                            <option value="">Select Instructor</option>
+                            <option value="1" <%= course.instructor_id == 1 ? 'selected' : '' %>>Dr. John Smith</option>
+                            <option value="2" <%= course.instructor_id == 2 ? 'selected' : '' %>>Prof. Sarah Johnson</option>
+                            <option value="3" <%= course.instructor_id == 3 ? 'selected' : '' %>>Dr. Mike Williams</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description" class="form-label">Course Description</label>
+                        <textarea id="description" name="description" class="form-textarea" 
+                                  placeholder="Provide a detailed description of the course..."><%= course.description || '' %></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" class="form-control"
+                                   value="<%= course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" id="endDate" name="endDate" class="form-control"
+                                   value="<%= course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : '' %>">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxStudents" class="form-label">Maximum Students</label>
+                            <input type="number" id="maxStudents" name="maxStudents" class="form-control" 
+                                   min="1" max="500" value="<%= course.max_students || 50 %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="courseFee" class="form-label">Course Fee (KES)</label>
+                            <input type="number" id="courseFee" name="courseFee" class="form-control" 
+                                   min="0" step="100" value="<%= course.course_fee || 15000 %>">
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="isActive" name="isActive" class="form-check-input" 
+                               <%= course.is_active ? 'checked' : '' %>>
+                        <label for="isActive" class="form-check-label">
+                            Active Course
+                        </label>
+                    </div>
+                    <small class="form-text">
+                        Active courses are visible to students and available for enrollment
+                    </small>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Update Course
+                        </button>
+                        <a href="/admin/courses/<%= course.id %>" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                            <i class="fas fa-trash me-1"></i>
+                            Delete Course
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-content">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Course Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="course-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Current Enrollment</span>
+                        <span class="stat-value">42/50</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Completion Rate</span>
+                        <span class="stat-value">85%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Grade</span>
+                        <span class="stat-value">B+</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Assignments</span>
+                        <span class="stat-value">8</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active Students</span>
+                        <span class="stat-value">38</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Editing Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="tips">
+                    <div class="tip-item">
+                        <strong>Active Status</strong>
+                        <p>Deactivating a course will hide it from students but preserve all data.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Capacity Changes</strong>
+                        <p>Reducing maximum students won't affect currently enrolled students.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Fee Updates</strong>
+                        <p>Fee changes apply only to new enrollments, not existing students.</p>
+                    </div>
+                    <div class="tip-item">
+                        <strong>Date Modifications</strong>
+                        <p>Extending end dates automatically adjusts assignment deadlines.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    if (confirm('Are you sure you want to delete this course? This action cannot be undone and will remove all associated data including enrollments and assignments.')) {
+        // Implement delete logic here
+        window.location.href = '/admin/courses/<%= course.id %>/delete';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editCourseForm');
+    form.addEventListener('submit', function(e) {
+        const courseName = document.getElementById('courseName').value.trim();
+        
+        if (!courseName) {
+            e.preventDefault();
+            alert('Please fill in the course name.');
+            return;
+        }
+
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+            e.preventDefault();
+            alert('End date cannot be before start date.');
+            return;
+        }
+
+        const maxStudents = parseInt(document.getElementById('maxStudents').value);
+        if (maxStudents < 1) {
+            e.preventDefault();
+            alert('Maximum students must be at least 1.');
+            return;
+        }
+    });
+});
+</script>
