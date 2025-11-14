@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">EduLMS Admin</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Notification Details</h1>
+            <div>
+                <a href="/admin/system/notifications" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title"><%= notification.title %></h3>
+                <div class="mb-3">
+                    <span class="badge bg-secondary"><%= notification.type %></span>
+                    <span class="badge bg-<%= notification.status === 'sent' ? 'success' : 'warning' %>">
+                        <%= notification.status %>
+                    </span>
+                    <span class="badge bg-info"><%= notification.audience %></span>
+                </div>
+                
+                <div class="card-text mb-4">
+                    <p><%= notification.message %></p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Details</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Created:</strong> <%= new Date(notification.createdAt).toLocaleString() %></li>
+                            <li><strong>Priority:</strong> <%= notification.priority %></li>
+                            <li><strong>ID:</strong> <%= notification.id %></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
